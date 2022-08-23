@@ -2,6 +2,8 @@
     "name" : "বাংলা",
     "skills": {
         "lang": ["C++","Java"],
+        "true-test": true,
+        "false-test": false,
         "male": 12,
         "negI": -15,
         "cgpa": 3.5,

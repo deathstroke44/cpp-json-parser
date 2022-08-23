@@ -398,71 +398,50 @@ void handle_float_state(char &c, int &char_code) {
 }
 
 void handle_true_state(char &c, int &char_code) {
-    if (state = TRUE_1_STATE) {
-        if (c =='r') {
-            next_state = TRUE_2_STATE;
-        }
+    if (state == TRUE_1_STATE && c =='r') {
+        next_state = TRUE_2_STATE;
     }
-    if (state = TRUE_2_STATE) {
-        if (c =='u') {
-            next_state = TRUE_3_STATE;
-        }
+    if (state == TRUE_2_STATE && c =='u') {
+        next_state = TRUE_3_STATE;
     }
-    if (state = TRUE_3_STATE) {
-        if (c =='e') {
-            next_state = WHITESPACE_STATE;
-            is_completed = true;
-            latest_token = make_pair(BOOLEAN_TOKEN, "true");
-        }
+    if (state == TRUE_3_STATE && c =='e') {
+        next_state = WHITESPACE_STATE;
+        is_completed = true;
+        latest_token = make_pair(BOOLEAN_TOKEN, "true");
     }
 }
 
 void handle_false_state(char &c, int &char_code) {
-    if (state == FALSE_1_STATE) {
-        if (c =='a') {
-            next_state = FALSE_2_STATE;
-        }
+    if (state == FALSE_1_STATE && c =='a') {
+        next_state = FALSE_2_STATE;
     }
-    else if (state == FALSE_2_STATE) {
-        if (c =='l') {
-            next_state = FALSE_3_STATE;
-        }
+    else if (state == FALSE_2_STATE && c =='l') {
+        next_state = FALSE_3_STATE;
     }
-    else if (state == FALSE_3_STATE) {
-        if (c =='s') {
-            next_state = FALSE_4_STATE;
-        }
+    else if (state == FALSE_3_STATE && c =='s') {
+        next_state = FALSE_4_STATE;
     }
-    else if (state == FALSE_4_STATE) {
-        if (c =='e') {
-            next_state = WHITESPACE_STATE;
-            is_completed = true;
-            latest_token = make_pair(BOOLEAN_TOKEN, "false");
-        }
+    else if (state == FALSE_4_STATE && c =='e') {
+        next_state = WHITESPACE_STATE;
+        is_completed = true;
+        latest_token = make_pair(BOOLEAN_TOKEN, "false");
     }
 
     
 }
 
 void handle_null_state(char &c, int &char_code) {
-    if (state = NULL_1_STATE) {
-        if (c =='u') {
-            next_state = NULL_2_STATE;
-        }
+    if (state == NULL_1_STATE && c =='u') {
+        next_state = NULL_2_STATE;
     }
-    if (state = NULL_2_STATE) {
-        if (c =='l') {
-            next_state = NULL_3_STATE;
-        }
+    if (state == NULL_2_STATE && c =='l') {
+        next_state = NULL_3_STATE;
     }
-    if (state = NULL_3_STATE) {
-        if (c =='l') {
-            next_state = WHITESPACE_STATE;
-            is_completed = true;
-            latest_token = make_pair(NULL_TOKEN, "null");
-        }
-    }
-    
+    if (state == NULL_3_STATE && c =='l') {
+        next_state = WHITESPACE_STATE;
+        is_completed = true;
+        latest_token = make_pair(NULL_TOKEN, "null");
+    }  
 }
 
 void handle_string_state(char &c, int &char_code) {
