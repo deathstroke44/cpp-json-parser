@@ -1,0 +1,28 @@
+{
+    "name" : "বাংলা",
+    "skills": {
+        "lang": ["C++","Java"],
+        "male": 12,
+        "negI": -15,
+        "cgpa": 3.5,
+        "exp1": 4.5e14,
+        "exp2": 5.5E14,
+        "negExp": -6.5E14,
+        "negExp-": -7.5E-14,
+        "negF": -8.5,
+        "coeffd": 0.0,
+        "coeff": 0,
+        "mindeset": "中文",
+        "mix": ["one", true, "three", "four", true, 5],
+        "married": false,
+        "nulltest": null,
+        "nested1" : {
+            "nested2" : {
+                "key1": "val1"
+            },
+            "nested3" : {
+                "key2": "val2"
+            }
+        }
+    }
+}
