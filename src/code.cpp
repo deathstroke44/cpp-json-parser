@@ -66,12 +66,15 @@ bool add_char = false;
 FState next_state = WHITESPACE_STATE;
 pair<TokenType, string> previous_token;
 bool previous_token_un_processed = false;
+pair<TokenType, string> latest_token = make_pair(NULL_TOKEN,"");
 void stream_token(pair<TokenType, string> token, bool print_key_end_event);
+void emitEvent(int eventType, string value, bool listElement);
+void handle_whitespace_state(char &c, int &char_code);
 
 // https://www.json.org/json-en.html
 // https://docstore.mik.ua/orelly/xml/pxml/ch04_02.htm
 
-pair<TokenType, string> latest_token = make_pair(NULL_TOKEN,"");
+
 
 // bool get_is_part_of_object() {
 //     return is_part_of_object.top();
@@ -138,6 +141,7 @@ void emitEvent(int eventType, string value, bool listElement) {
         cout<<"Json Stream Event: "<<"Exponent Value: "<<stof(value)<<endl;
         
     }
+    cout<<"---------------------------------------------------------------------------------"<<endl;
 }
 
 
@@ -230,37 +234,18 @@ bool char_range_v1(char c, char _mn, char _mx) {
 }
 
 void handle_whitespace_state(char &c, int &char_code) {
+    vector<char> common_cases = {'{', '}','[',']',',',':'};
+    for (auto i = common_cases.begin(); i != common_cases.end(); ++i) {
+        if (*i == c) {
+            string s;
+            s.push_back(c);
+            is_completed = true;
+            latest_token = make_pair(OPERATOR_TOKEN, s);
+            return;
+        }
+    }
     switch (c)
     {
-        case '{':
-            is_completed = true;
-            latest_token = make_pair(OPERATOR_TOKEN, "{");
-            break;
-        case '}':
-            /* code */
-            is_completed = true;
-            latest_token = make_pair(OPERATOR_TOKEN, "}");
-            break;
-        case '[':
-            /* code */
-            is_completed = true;
-            latest_token = make_pair(OPERATOR_TOKEN, "[");
-            break;
-        case ']':
-            /* code */
-            is_completed = true;
-            latest_token = make_pair(OPERATOR_TOKEN, "]");
-            break;
-        case ',':
-            /* code */
-            is_completed = true;
-            latest_token = make_pair(OPERATOR_TOKEN, ",");
-            break;
-        case ':':
-            /* code */
-            is_completed = true;
-            latest_token = make_pair(OPERATOR_TOKEN, ":");
-            break;
         case '\"':
             /* code */
             next_state = STRING_STATE;
