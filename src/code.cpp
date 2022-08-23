@@ -571,6 +571,7 @@ void start_tokenize() {
     std::getline (std::cin,fileName);
 
     std::fstream fs{ fileName }; 
+    fs >> std::noskipws;
     char c;
     int idx = 0;
     while (true) 

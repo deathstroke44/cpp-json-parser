@@ -23,7 +23,7 @@
                 "key1": "val1"
             },
             "nested3" : {
-                "key2": "val2"
+                "key2": "val 2 \n3"
             }
         }
     }

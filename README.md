@@ -2,7 +2,6 @@
 
 output after parsing code-test.json
 
-Please enter json file name that you want to stream: code-test.json
 Json Stream Event: object started
 ---------------------------------------------------------------------------------
 Json Stream Event: key: name
@@ -121,7 +120,8 @@ Json Stream Event: object started
 ---------------------------------------------------------------------------------
 Json Stream Event: key: key2
 ---------------------------------------------------------------------------------
-Json Stream Event: Value: val2
+Json Stream Event: Value: val 2 
+3
 ---------------------------------------------------------------------------------
 Json Stream Event: object ended
 ---------------------------------------------------------------------------------
