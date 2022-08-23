@@ -103,11 +103,11 @@ void emitEvent(int eventType, string value, bool listElement) {
     }
     else if (eventType == 3) {
         // list started
-        cout<<"Json Stream Event: "<<"list started: "<<value<<endl;
+        cout<<"Json Stream Event: "<<"list started"<<endl;
     }
     else if (eventType == 4) {
         // list ended
-        cout<<"Json Stream Event: "<<"list ended: "<<value<<endl;
+        cout<<"Json Stream Event: "<<"list ended"<<endl;
     }
     else if (eventType == 5) {
         // list entry
@@ -115,11 +115,11 @@ void emitEvent(int eventType, string value, bool listElement) {
     }
     else if (eventType == 6) {
         // object started
-        cout<<"Json Stream Event: "<<"object started: "<<value<<endl;
+        cout<<"Json Stream Event: "<<"object started"<<endl;
     }
     else if (eventType == 7) {
         // object ended
-        cout<<"Json Stream Event: "<<"object ended: "<<value<<endl;
+        cout<<"Json Stream Event: "<<"object ended"<<endl;
     }
     else if (eventType == 8) {
         // value integer

@@ -3,7 +3,7 @@
 output after parsing code-test.json
 
 Please enter json file name that you want to stream: code-test.json
-Json Stream Event: object started: object
+Json Stream Event: object started
 ---------------------------------------------------------------------------------
 Json Stream Event: key: name
 ---------------------------------------------------------------------------------
@@ -11,17 +11,17 @@ Json Stream Event: Value: বাংলা
 ---------------------------------------------------------------------------------
 Json Stream Event: key: skills
 ---------------------------------------------------------------------------------
-Json Stream Event: object started: object
+Json Stream Event: object started
 ---------------------------------------------------------------------------------
 Json Stream Event: key: lang
 ---------------------------------------------------------------------------------
-Json Stream Event: list started: list
+Json Stream Event: list started
 ---------------------------------------------------------------------------------
 Json Stream Event: Value: C++
 ---------------------------------------------------------------------------------
 Json Stream Event: Value: Java
 ---------------------------------------------------------------------------------
-Json Stream Event: list ended: list
+Json Stream Event: list ended
 ---------------------------------------------------------------------------------
 Json Stream Event: key: true-test
 ---------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ Json Stream Event: Value: 中文
 ---------------------------------------------------------------------------------
 Json Stream Event: key: mix
 ---------------------------------------------------------------------------------
-Json Stream Event: list started: list
+Json Stream Event: list started
 ---------------------------------------------------------------------------------
 Json Stream Event: Value: one
 ---------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ Json Stream Event: Boolean Value: true
 ---------------------------------------------------------------------------------
 Json Stream Event: Integer Value: 5
 ---------------------------------------------------------------------------------
-Json Stream Event: list ended: list
+Json Stream Event: list ended
 ---------------------------------------------------------------------------------
 Json Stream Event: key: married
 ---------------------------------------------------------------------------------
@@ -103,31 +103,31 @@ Json Stream Event: Value: null
 ---------------------------------------------------------------------------------
 Json Stream Event: key: nested1
 ---------------------------------------------------------------------------------
-Json Stream Event: object started: object
+Json Stream Event: object started
 ---------------------------------------------------------------------------------
 Json Stream Event: key: nested2
 ---------------------------------------------------------------------------------
-Json Stream Event: object started: object
+Json Stream Event: object started
 ---------------------------------------------------------------------------------
 Json Stream Event: key: key1
 ---------------------------------------------------------------------------------
 Json Stream Event: Value: val1
 ---------------------------------------------------------------------------------
-Json Stream Event: object ended: object
+Json Stream Event: object ended
 ---------------------------------------------------------------------------------
 Json Stream Event: key: nested3
 ---------------------------------------------------------------------------------
-Json Stream Event: object started: object
+Json Stream Event: object started
 ---------------------------------------------------------------------------------
 Json Stream Event: key: key2
 ---------------------------------------------------------------------------------
 Json Stream Event: Value: val2
 ---------------------------------------------------------------------------------
-Json Stream Event: object ended: object
+Json Stream Event: object ended
 ---------------------------------------------------------------------------------
-Json Stream Event: object ended: object
+Json Stream Event: object ended
 ---------------------------------------------------------------------------------
-Json Stream Event: object ended: object
+Json Stream Event: object ended
 ---------------------------------------------------------------------------------
-Json Stream Event: object ended: object
+Json Stream Event: object ended
 ---------------------------------------------------------------------------------
