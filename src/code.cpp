@@ -1,4 +1,6 @@
 #include<bits/stdc++.h>
+#include "Dispatcher.hh"
+#include "Event.hh"
 using namespace std;
 #define sfi(a) scanf("%d",&a)
 #define sfl(a) scanf("%lld",&a)
@@ -14,6 +16,39 @@ using namespace std;
 #define sq(x) ((x)*(x))
 typedef long long int li;
 
+enum JsonEventType {
+    KEY_EVENT,
+    STRING_EVENT,
+    BOOL_EVENT,
+    NULL_EVENT,
+    INTEGER_EVENT,
+    FLOAT_EVENT,
+    EXPONENT_EVENT,
+    OBJECT_LIST_EVENT
+};
+
+class JsonEvent : public Event<JsonEventType>
+{
+    public:
+    JsonEvent() : Event<JsonEventType>(JsonEventType::KEY_EVENT, "JsonEvent"){};
+    JsonEvent(JsonEventType jsonEventType, string value) : Event<JsonEventType>(jsonEventType,  value){};
+    virtual ~JsonEvent() = default;
+};
+
+void onEvent1(const Event<JsonEventType>& event){
+  if(event.type() == JsonEventType::KEY_EVENT) { std::cout << "EMITTED Event TYPE: KEY " << event.getName() << std::endl;}
+  if(event.type() == JsonEventType::STRING_EVENT) { std::cout << "EMITTED Event TYPE: String " << event.getName() << std::endl;}
+  if(event.type() == JsonEventType::BOOL_EVENT) { std::cout << "EMITTED Event TYPE: BOOL " << event.getName() << std::endl;}
+  if(event.type() == JsonEventType::NULL_EVENT) { std::cout << "EMITTED Event TYPE: NULL " << event.getName() << std::endl;}
+  if(event.type() == JsonEventType::INTEGER_EVENT) { std::cout << "EMITTED Event TYPE: INTEGER " << event.getName() << std::endl;}
+  if(event.type() == JsonEventType::FLOAT_EVENT) { std::cout << "EMITTED Event TYPE: FLOAT " << event.getName() << std::endl;}
+  if(event.type() == JsonEventType::EXPONENT_EVENT) { std::cout << "EMITTED Event TYPE: EXPONENT " << event.getName() << std::endl;}
+  if(event.type() == JsonEventType::OBJECT_LIST_EVENT) { std::cout << "EMITTED Event TYPE: OBJECT LIST EVENT " << event.getName() << std::endl;}
+
+    cout<<"---------------------------------------------------------------------------------"<<endl;
+}
+
+Dispatcher<JsonEventType> dispatcher1;
 
 enum TokenType{
     OPERATOR_TOKEN,
@@ -68,7 +103,6 @@ pair<TokenType, string> previous_token;
 bool previous_token_un_processed = false;
 pair<TokenType, string> latest_token = make_pair(NULL_TOKEN,"");
 void stream_token(pair<TokenType, string> token, bool print_key_end_event);
-void emitEvent(int eventType, string value, bool listElement);
 void handle_whitespace_state(char &c, int &char_code);
 
 // https://www.json.org/json-en.html
@@ -94,54 +128,75 @@ void emitEvent(int eventType, string value, bool listElement) {
     if (eventType == 0) {
         // value string
         cout<<"Json Stream Event: "<<"Value: "<<value<<endl;
+        Event<JsonEventType> jsonEvent(JsonEventType::STRING_EVENT, value);
+        dispatcher1.post(jsonEvent);
         
     }
     else if (eventType == 2) {
         // value key
         cout<<"Json Stream Event: "<<"key: "<<value<<endl;
-        
+        Event<JsonEventType> jsonEvent(JsonEventType::KEY_EVENT, value);
+        dispatcher1.post(jsonEvent);
     }
     else if (eventType == 3) {
         // list started
         cout<<"Json Stream Event: "<<"list started"<<endl;
+        Event<JsonEventType> jsonEvent(JsonEventType::OBJECT_LIST_EVENT, "list started");
+        dispatcher1.post(jsonEvent);
     }
     else if (eventType == 4) {
         // list ended
         cout<<"Json Stream Event: "<<"list ended"<<endl;
-    }
-    else if (eventType == 5) {
-        // list entry
-        cout<<"Json Stream Event: "<<"list entry: "<<value<<endl;
+        Event<JsonEventType> jsonEvent(JsonEventType::OBJECT_LIST_EVENT, "list ended");
+        dispatcher1.post(jsonEvent);
     }
     else if (eventType == 6) {
         // object started
         cout<<"Json Stream Event: "<<"object started"<<endl;
+        Event<JsonEventType> jsonEvent(JsonEventType::OBJECT_LIST_EVENT, "object started");
+        dispatcher1.post(jsonEvent);
     }
     else if (eventType == 7) {
         // object ended
         cout<<"Json Stream Event: "<<"object ended"<<endl;
+        Event<JsonEventType> jsonEvent(JsonEventType::OBJECT_LIST_EVENT, "object ended");
+        dispatcher1.post(jsonEvent);
     }
     else if (eventType == 8) {
         // value integer
         cout<<"Json Stream Event: "<<"Integer Value: "<<stoll(value)<<endl;
+        Event<JsonEventType> jsonEvent(JsonEventType::INTEGER_EVENT, value);
+        dispatcher1.post(jsonEvent);
         
     }
     else if (eventType == 9) {
         // value integer
         cout<<"Json Stream Event: "<<"Float Value: "<<stof(value)<<endl;
+        Event<JsonEventType> jsonEvent(JsonEventType::FLOAT_EVENT, value);
+        dispatcher1.post(jsonEvent);
         
     }
     else if (eventType == 10) {
         // value integer
         cout<<"Json Stream Event: "<<"Boolean Value: "<<value<<endl;
+        Event<JsonEventType> jsonEvent(JsonEventType::BOOL_EVENT, value);
+        dispatcher1.post(jsonEvent);
         
     }
     else if (eventType == 11) {
         // value integer
         cout<<"Json Stream Event: "<<"Exponent Value: "<<stof(value)<<endl;
+        Event<JsonEventType> jsonEvent(JsonEventType::EXPONENT_EVENT, value);
+        dispatcher1.post(jsonEvent);
         
     }
-    cout<<"---------------------------------------------------------------------------------"<<endl;
+    else if (eventType == 12) {
+        // value integer
+        cout<<"Json Stream Event: "<<"NULL Value: "<<value<<endl;
+        Event<JsonEventType> jsonEvent(JsonEventType::NULL_EVENT, value);
+        dispatcher1.post(jsonEvent);
+        
+    }
 }
 
 
@@ -197,7 +252,7 @@ void stream_token(pair<TokenType, string> token, bool print_key_end_event) {
         emitEvent(10, token_value, false);
     }
     else if(token_type == NULL_TOKEN) {
-        emitEvent(0, token_value, false);
+        emitEvent(12, token_value, false);
     }
 
 }
@@ -561,6 +616,15 @@ void start_tokenize_v1(char &c) {
 }
 
 void start_tokenize() {
+    dispatcher1 = Dispatcher<JsonEventType>();
+    dispatcher1.subscribe( JsonEventType::KEY_EVENT, onEvent1 );
+    dispatcher1.subscribe( JsonEventType::STRING_EVENT, onEvent1 );
+    dispatcher1.subscribe( JsonEventType::BOOL_EVENT, onEvent1 );
+    dispatcher1.subscribe( JsonEventType::NULL_EVENT, onEvent1 );
+    dispatcher1.subscribe( JsonEventType::INTEGER_EVENT, onEvent1 );
+    dispatcher1.subscribe( JsonEventType::FLOAT_EVENT, onEvent1 );
+    dispatcher1.subscribe( JsonEventType::EXPONENT_EVENT, onEvent1 );
+    dispatcher1.subscribe( JsonEventType::OBJECT_LIST_EVENT, onEvent1 );
     string fileName;
     tokens.clear();
     is_completed = false;
