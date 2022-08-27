@@ -48,7 +48,7 @@ void onEvent1(const Event<JsonEventType>& event){
     cout<<"---------------------------------------------------------------------------------"<<endl;
 }
 
-Dispatcher<JsonEventType> dispatcher1;
+Dispatcher<JsonEventType> eventDispatcher;
 
 enum TokenType{
     OPERATOR_TOKEN,
@@ -129,72 +129,72 @@ void emitEvent(int eventType, string value, bool listElement) {
         // value string
         cout<<"Json Stream Event: "<<"Value: "<<value<<endl;
         Event<JsonEventType> jsonEvent(JsonEventType::STRING_EVENT, value);
-        dispatcher1.post(jsonEvent);
+        eventDispatcher.post(jsonEvent);
         
     }
     else if (eventType == 2) {
         // value key
         cout<<"Json Stream Event: "<<"key: "<<value<<endl;
         Event<JsonEventType> jsonEvent(JsonEventType::KEY_EVENT, value);
-        dispatcher1.post(jsonEvent);
+        eventDispatcher.post(jsonEvent);
     }
     else if (eventType == 3) {
         // list started
         cout<<"Json Stream Event: "<<"list started"<<endl;
         Event<JsonEventType> jsonEvent(JsonEventType::OBJECT_LIST_EVENT, "list started");
-        dispatcher1.post(jsonEvent);
+        eventDispatcher.post(jsonEvent);
     }
     else if (eventType == 4) {
         // list ended
         cout<<"Json Stream Event: "<<"list ended"<<endl;
         Event<JsonEventType> jsonEvent(JsonEventType::OBJECT_LIST_EVENT, "list ended");
-        dispatcher1.post(jsonEvent);
+        eventDispatcher.post(jsonEvent);
     }
     else if (eventType == 6) {
         // object started
         cout<<"Json Stream Event: "<<"object started"<<endl;
         Event<JsonEventType> jsonEvent(JsonEventType::OBJECT_LIST_EVENT, "object started");
-        dispatcher1.post(jsonEvent);
+        eventDispatcher.post(jsonEvent);
     }
     else if (eventType == 7) {
         // object ended
         cout<<"Json Stream Event: "<<"object ended"<<endl;
         Event<JsonEventType> jsonEvent(JsonEventType::OBJECT_LIST_EVENT, "object ended");
-        dispatcher1.post(jsonEvent);
+        eventDispatcher.post(jsonEvent);
     }
     else if (eventType == 8) {
         // value integer
         cout<<"Json Stream Event: "<<"Integer Value: "<<stoll(value)<<endl;
         Event<JsonEventType> jsonEvent(JsonEventType::INTEGER_EVENT, value);
-        dispatcher1.post(jsonEvent);
+        eventDispatcher.post(jsonEvent);
         
     }
     else if (eventType == 9) {
         // value integer
         cout<<"Json Stream Event: "<<"Float Value: "<<stof(value)<<endl;
         Event<JsonEventType> jsonEvent(JsonEventType::FLOAT_EVENT, value);
-        dispatcher1.post(jsonEvent);
+        eventDispatcher.post(jsonEvent);
         
     }
     else if (eventType == 10) {
         // value integer
         cout<<"Json Stream Event: "<<"Boolean Value: "<<value<<endl;
         Event<JsonEventType> jsonEvent(JsonEventType::BOOL_EVENT, value);
-        dispatcher1.post(jsonEvent);
+        eventDispatcher.post(jsonEvent);
         
     }
     else if (eventType == 11) {
         // value integer
         cout<<"Json Stream Event: "<<"Exponent Value: "<<stof(value)<<endl;
         Event<JsonEventType> jsonEvent(JsonEventType::EXPONENT_EVENT, value);
-        dispatcher1.post(jsonEvent);
+        eventDispatcher.post(jsonEvent);
         
     }
     else if (eventType == 12) {
         // value integer
         cout<<"Json Stream Event: "<<"NULL Value: "<<value<<endl;
         Event<JsonEventType> jsonEvent(JsonEventType::NULL_EVENT, value);
-        dispatcher1.post(jsonEvent);
+        eventDispatcher.post(jsonEvent);
         
     }
 }
@@ -615,24 +615,17 @@ void start_tokenize_v1(char &c) {
 
 }
 
-void start_tokenize() {
-    dispatcher1 = Dispatcher<JsonEventType>();
-    dispatcher1.subscribe( JsonEventType::KEY_EVENT, onEvent1 );
-    dispatcher1.subscribe( JsonEventType::STRING_EVENT, onEvent1 );
-    dispatcher1.subscribe( JsonEventType::BOOL_EVENT, onEvent1 );
-    dispatcher1.subscribe( JsonEventType::NULL_EVENT, onEvent1 );
-    dispatcher1.subscribe( JsonEventType::INTEGER_EVENT, onEvent1 );
-    dispatcher1.subscribe( JsonEventType::FLOAT_EVENT, onEvent1 );
-    dispatcher1.subscribe( JsonEventType::EXPONENT_EVENT, onEvent1 );
-    dispatcher1.subscribe( JsonEventType::OBJECT_LIST_EVENT, onEvent1 );
-    string fileName;
+Dispatcher<JsonEventType> getEventDispatcher() {
+    eventDispatcher = Dispatcher<JsonEventType>();
+    return eventDispatcher;
+}
+
+void start_json_streaming(string fileName) {
     tokens.clear();
     is_completed = false;
     char_code = 0;
     latest_token = make_pair(NULL_TOKEN,"");
     state = WHITESPACE_STATE;
-    cout<<"Please enter json file name that you want to stream: ";
-    std::getline (std::cin,fileName);
 
     std::fstream fs{ fileName }; 
     fs >> std::noskipws;
@@ -658,8 +651,3 @@ void start_tokenize() {
 
 }
 
-int main() {
-    int n,m;
-    start_tokenize();
-    return 0;
-}
