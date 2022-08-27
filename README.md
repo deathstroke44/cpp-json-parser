@@ -1,3 +1,4 @@
+"EMITTED Event TYPE:" is printed after handling the event.
 Please enter json file name that you want to stream: code-test.json
 Json Stream Event: object started
 EMITTED Event TYPE: OBJECT LIST EVENT object started
