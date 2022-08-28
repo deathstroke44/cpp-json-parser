@@ -24,7 +24,8 @@ enum JsonEventType {
     INTEGER_EVENT,
     FLOAT_EVENT,
     EXPONENT_EVENT,
-    OBJECT_LIST_EVENT
+    OBJECT_LIST_EVENT,
+    Document_END
 };
 
 class JsonEvent : public Event<JsonEventType>
@@ -48,7 +49,7 @@ void onEvent1(const Event<JsonEventType>& event){
     cout<<"---------------------------------------------------------------------------------"<<endl;
 }
 
-Dispatcher<JsonEventType> eventDispatcher;
+
 
 enum TokenType{
     OPERATOR_TOKEN,
@@ -88,6 +89,8 @@ enum FState{
     UNICODE_3_STATE,
     UNICODE_4_STATE
 };
+class Json_stream_parser {
+
 
 vector<string> tokens;
 // stack<string> key_stack;
@@ -102,8 +105,10 @@ FState next_state = WHITESPACE_STATE;
 pair<TokenType, string> previous_token;
 bool previous_token_un_processed = false;
 pair<TokenType, string> latest_token = make_pair(NULL_TOKEN,"");
-void stream_token(pair<TokenType, string> token, bool print_key_end_event);
-void handle_whitespace_state(char &c, int &char_code);
+public:
+Dispatcher<JsonEventType> eventDispatcher = Dispatcher<JsonEventType>();
+// void stream_token(pair<TokenType, string> token, bool print_key_end_event);
+// void handle_whitespace_state(char &c, int &char_code);
 
 // https://www.json.org/json-en.html
 // https://docstore.mik.ua/orelly/xml/pxml/ch04_02.htm
@@ -616,7 +621,6 @@ void start_tokenize_v1(char &c) {
 }
 
 Dispatcher<JsonEventType> getEventDispatcher() {
-    eventDispatcher = Dispatcher<JsonEventType>();
     return eventDispatcher;
 }
 
@@ -626,6 +630,7 @@ void start_json_streaming(string fileName) {
     char_code = 0;
     latest_token = make_pair(NULL_TOKEN,"");
     state = WHITESPACE_STATE;
+
 
     std::fstream fs{ fileName }; 
     fs >> std::noskipws;
@@ -648,6 +653,8 @@ void start_json_streaming(string fileName) {
         }
          
     }
-
+    cout<<"Doc End"<<endl;
+    Event<JsonEventType> jsonEvent(JsonEventType::Document_END, "");
+    eventDispatcher.post(jsonEvent);
 }
-
+};
