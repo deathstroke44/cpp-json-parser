@@ -7,7 +7,7 @@ Create a new Json Stream Parser.
 ```cpp
 Json_stream_parser json_stream_parser = Json_stream_parser();
 ```
-
+jalebi bai
 Event dispatcher can fire following events:
 ```cpp
 enum JsonEventType {
@@ -39,10 +39,12 @@ void handleEvent(const Event<JsonEventType>& event) {
 
 
 
-start parsing by giving the relative path of the JSON file to the parsing function:
+After subscribing to the required events and adding event handlers, start parsing by giving the relative path of the JSON file to the parsing function:
 
 ```cpp
 json_stream_parser.start_json_streaming(fileName);
 ```
+
+Getting a Document_END event indicates that the parser has already scanned the whole JSON file.
 
 **[Demo.cpp](https://github.com/deathstroke44/cpp-json-parser/blob/main/src/demo.cpp) file will give you a better idea of how to use this json stream parser.**
