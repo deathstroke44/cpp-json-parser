@@ -7,7 +7,6 @@ Create a new Json Stream Parser.
 ```cpp
 Json_stream_parser json_stream_parser = Json_stream_parser();
 ```
-jalebi bai
 Event dispatcher can fire following events:
 ```cpp
 enum JsonEventType {
