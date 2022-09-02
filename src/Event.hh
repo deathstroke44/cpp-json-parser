@@ -1,6 +1,8 @@
 #ifndef EVENT_HH__
 #define EVENT_HH__
 #include <string>
+#include<bits/stdc++.h>
+using namespace std;
 /**
   @class Event
   @brief Base class for all events
