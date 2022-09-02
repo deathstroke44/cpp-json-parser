@@ -18,20 +18,76 @@ vector<string> part_of_stack;
 pair<JsonEventType,string> last_event = make_pair(JsonEventType::NULL_EVENT, "");
 int key_found = 0; // 0 not found , 1 traversing, 2 ended
 string current_key="";
-string desired_key = "[1]"; // skills.nested1.nested3.key2  kills.lang [0].id
+string desired_key = "skills"; // skills.nested1.nested3.key2  skills.lang [0].id
 Event<JsonEventType> current_event;
+Event<JsonEventType> last_desired_event;
+string traversedJson = "";
+
+void remove_delimeter_not_exists(const Event<JsonEventType>& event) {
+    bool flag = event.type() == JsonEventType::OBJECT_LIST_EVENT && ((event.getName() == "list ended") ||
+    (event.getName() == "object ended"));
+    if (flag && traversedJson.size()>0 && traversedJson[traversedJson.size()-1]==',') {
+        traversedJson.pop_back();
+    }
+
+}
+void remove_last_delimeter() {
+    if (traversedJson.size()>0 && traversedJson[traversedJson.size()-1]==',') {
+        traversedJson.pop_back();
+    }
+
+}
 
 void addEventInDesiredResult(const Event<JsonEventType>& event) {
-    if(event.type() == JsonEventType::KEY_EVENT) { std::cout << "EMITTED Event TYPE: KEY " << event.getName() << std::endl;}
-    if(event.type() == JsonEventType::STRING_EVENT) { std::cout << "EMITTED Event TYPE: String " << event.getName() << std::endl;}
-    if(event.type() == JsonEventType::BOOL_EVENT) { std::cout << "EMITTED Event TYPE: BOOL " << event.getName() << std::endl;}
-    if(event.type() == JsonEventType::NULL_EVENT) { std::cout << "EMITTED Event TYPE: NULL " << event.getName() << std::endl;}
-    if(event.type() == JsonEventType::INTEGER_EVENT) { std::cout << "EMITTED Event TYPE: INTEGER " << event.getName() << std::endl;}
-    if(event.type() == JsonEventType::FLOAT_EVENT) { std::cout << "EMITTED Event TYPE: FLOAT " << event.getName() << std::endl;}
-    if(event.type() == JsonEventType::EXPONENT_EVENT) { std::cout << "EMITTED Event TYPE: EXPONENT " << event.getName() << std::endl;}
-    if(event.type() == JsonEventType::OBJECT_LIST_EVENT) { std::cout << "EMITTED Event TYPE: OBJECT LIST EVENT " << event.getName() << std::endl;}
-    if(event.type() == JsonEventType::Document_END) { std::cout << "EMITTED Event TYPE: Full Document Read Completed " << std::endl;}
+    remove_delimeter_not_exists(event);
+    // cout<<"traversed json before: "<<traversedJson<<endl;
+    if(event.type() == JsonEventType::KEY_EVENT) { 
+        traversedJson += "\""+event.getName()+ "\""+" : ";
+        std::cout << "EMITTED Event TYPE: KEY " << event.getName() << std::endl;
+    }
+    if(event.type() == JsonEventType::STRING_EVENT) { 
+        traversedJson += "\""+event.getName()+ "\",";
+        std::cout << "EMITTED Event TYPE: String " << event.getName() << std::endl;}
+    if(event.type() == JsonEventType::BOOL_EVENT) { 
+        traversedJson += event.getName()+ ","; 
+        std::cout << "EMITTED Event TYPE: BOOL " << event.getName() << std::endl;}
+    if(event.type() == JsonEventType::NULL_EVENT) { 
+        traversedJson += event.getName()+ ","; 
+        std::cout << "EMITTED Event TYPE: NULL " << event.getName() << std::endl;}
+    if(event.type() == JsonEventType::INTEGER_EVENT) {  
+        traversedJson += event.getName()+ ",";
+        std::cout << "EMITTED Event TYPE: INTEGER " << event.getName() << std::endl;}
+    if(event.type() == JsonEventType::FLOAT_EVENT) {  
+        traversedJson += event.getName()+ ",";
+        std::cout << "EMITTED Event TYPE: FLOAT " << event.getName() << std::endl;}
+    if(event.type() == JsonEventType::EXPONENT_EVENT) {  
+        traversedJson += event.getName()+ ",";
+        std::cout << "EMITTED Event TYPE: EXPONENT " << event.getName() << std::endl;}
+    if(event.type() == JsonEventType::OBJECT_LIST_EVENT) {
+        if (event.getName() == "list started") {
+            traversedJson.push_back('[');
+        }
+        else if (event.getName() == "list ended") {
+            traversedJson.push_back(']');
+            traversedJson.push_back(',');
+        }
+        else if (event.getName() == "object started") {
+
+            traversedJson.push_back('{');
+
+        }
+        else if (event.getName() == "object ended") {
+            traversedJson.push_back('}');
+            traversedJson.push_back(',');
+            
+        }
+    }
+    if(event.type() == JsonEventType::Document_END) { 
+        std::cout << "EMITTED Event TYPE: Full Document Read Completed " << std::endl;}
     cout<<"---------------------------------------------------------------------------------"<<endl;
+
+    // cout<<"traversed json after: "<<traversedJson<<endl;
+    last_desired_event = event;
 
 }
 
@@ -231,6 +287,10 @@ void handleEvent(const Event<JsonEventType>& event) {
     current_event = event;
     // handle event as your need. I have just added this code for testing and demo purpose.
     int prev_key_found = key_found;
+    if(event.type() == JsonEventType::Document_END) { 
+        remove_last_delimeter();
+        std::cout << "EMITTED Event TYPE: Full Document Read Completed " << endl<<traversedJson<<endl;
+    }
     if (key_found == 0 || key_found ==1)
     {
         if(event.type() == JsonEventType::KEY_EVENT) { 
@@ -256,10 +316,10 @@ void handleEvent(const Event<JsonEventType>& event) {
                 set_last_list_ended();
             }
             else if (event.getName() == "object started") {
-                set_part_of_value("object");
                 if (get_part_of_value() == "list") {
                     set_new_value_added_in_list();
                 }
+                set_part_of_value("object");
             }
             else if (event.getName() == "object ended") {
                 set_last_object_ended();
