@@ -653,7 +653,6 @@ void start_json_streaming(string fileName) {
         }
          
     }
-    cout<<"Doc End"<<endl;
     Event<JsonEventType> jsonEvent(JsonEventType::Document_END, "");
     eventDispatcher.post(jsonEvent);
 }
