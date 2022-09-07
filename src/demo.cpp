@@ -200,6 +200,11 @@ void handle_value_found() {
     }
 }
 
+void handleEventV1(const JsonStreamEvent<string>& event) { 
+    cout<<"New event check: "<<event.getName().first<<" "<<event.getName().second<<endl;
+
+}
+
 void handleEvent(const Event<JsonEventType>& event) {
     current_event = event;
     // handle event as your need. I have just added this code for testing and demo purpose.
@@ -258,6 +263,7 @@ int main() {
         json_stream_parser.eventDispatcher.subscribe( JsonEventType::EXPONENT_EVENT, handleEvent );
         json_stream_parser.eventDispatcher.subscribe( JsonEventType::OBJECT_LIST_EVENT, handleEvent );
         json_stream_parser.eventDispatcher.subscribe( JsonEventType::Document_END, handleEvent );
+        json_stream_parser.setEventHandler(handleEventV1);
     }
 
     json_stream_parser.start_json_streaming(fileName);

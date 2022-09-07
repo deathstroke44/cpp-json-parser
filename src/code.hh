@@ -16,17 +16,7 @@ using namespace std;
 #define sq(x) ((x)*(x))
 typedef long long int li;
 
-enum JsonEventType {
-    KEY_EVENT,
-    STRING_EVENT,
-    BOOL_EVENT,
-    NULL_EVENT,
-    INTEGER_EVENT,
-    FLOAT_EVENT,
-    EXPONENT_EVENT,
-    OBJECT_LIST_EVENT,
-    Document_END
-};
+
 
 class JsonEvent : public Event<JsonEventType>
 {
@@ -49,18 +39,6 @@ void onEvent1(const Event<JsonEventType>& event){
     cout<<"---------------------------------------------------------------------------------"<<endl;
 }
 
-
-
-enum TokenType{
-    OPERATOR_TOKEN,
-    STRING_TOKEN,
-    NUMBER_TOKEN,
-    EXP_TOKEN,
-    FLOAT_TOKEN,
-    INTEGER_TOKEN,
-    BOOLEAN_TOKEN,
-    NULL_TOKEN    
-};
 
 enum FState{
     WHITESPACE_STATE,
@@ -107,6 +85,8 @@ bool previous_token_un_processed = false;
 pair<TokenType, string> latest_token = make_pair(NULL_TOKEN,"");
 public:
 Dispatcher<JsonEventType> eventDispatcher = Dispatcher<JsonEventType>();
+DispatcherV2<string> eventDispatcherV1 = DispatcherV2<string>();
+string topicName = "jsonStreamTopic";
 // void stream_token(pair<TokenType, string> token, bool print_key_end_event);
 // void handle_whitespace_state(char &c, int &char_code);
 
@@ -128,79 +108,90 @@ Dispatcher<JsonEventType> eventDispatcher = Dispatcher<JsonEventType>();
 // }
 
 
+void setEventHandler(void (*func)(const JsonStreamEvent<string>&)) {
+    eventDispatcherV1.subscribe(topicName, func);
+}
 
 void emitEvent(int eventType, string value, bool listElement) {
+    JsonEventType _JsonEventType = JsonEventType::STRING_EVENT;
+    string _value = "";
     if (eventType == 0) {
         // value string
         // cout<<"Json Stream Event: "<<"Value: "<<value<<endl;
-        Event<JsonEventType> jsonEvent(JsonEventType::STRING_EVENT, value);
-        eventDispatcher.post(jsonEvent);
+        _JsonEventType = JsonEventType::STRING_EVENT;
+        _value = value;
         
     }
     else if (eventType == 2) {
         // value key
         // cout<<"Json Stream Event: "<<"key: "<<value<<endl;
-        Event<JsonEventType> jsonEvent(JsonEventType::KEY_EVENT, value);
-        eventDispatcher.post(jsonEvent);
+        _JsonEventType = JsonEventType::KEY_EVENT;
+        _value = value;
     }
     else if (eventType == 3) {
         // list started
         // cout<<"Json Stream Event: "<<"list started"<<endl;
-        Event<JsonEventType> jsonEvent(JsonEventType::OBJECT_LIST_EVENT, "list started");
-        eventDispatcher.post(jsonEvent);
+        _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _value = "list started";
     }
     else if (eventType == 4) {
         // list ended
         // cout<<"Json Stream Event: "<<"list ended"<<endl;
-        Event<JsonEventType> jsonEvent(JsonEventType::OBJECT_LIST_EVENT, "list ended");
-        eventDispatcher.post(jsonEvent);
+        _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _value = "list ended";
     }
     else if (eventType == 6) {
         // object started
         // cout<<"Json Stream Event: "<<"object started"<<endl;
-        Event<JsonEventType> jsonEvent(JsonEventType::OBJECT_LIST_EVENT, "object started");
-        eventDispatcher.post(jsonEvent);
+        _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _value = "object started";
     }
     else if (eventType == 7) {
         // object ended
         // cout<<"Json Stream Event: "<<"object ended"<<endl;
-        Event<JsonEventType> jsonEvent(JsonEventType::OBJECT_LIST_EVENT, "object ended");
-        eventDispatcher.post(jsonEvent);
+        _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _value = "object ended";
     }
     else if (eventType == 8) {
         // value integer
         // cout<<"Json Stream Event: "<<"Integer Value: "<<stoll(value)<<endl;
-        Event<JsonEventType> jsonEvent(JsonEventType::INTEGER_EVENT, value);
-        eventDispatcher.post(jsonEvent);
+        _JsonEventType = JsonEventType::INTEGER_EVENT;
+        _value = value;
         
     }
     else if (eventType == 9) {
         // value integer
         // cout<<"Json Stream Event: "<<"Float Value: "<<stof(value)<<endl;
-        Event<JsonEventType> jsonEvent(JsonEventType::FLOAT_EVENT, value);
-        eventDispatcher.post(jsonEvent);
+        _JsonEventType = JsonEventType::FLOAT_EVENT;
+        _value = value;
         
     }
     else if (eventType == 10) {
         // value integer
         // cout<<"Json Stream Event: "<<"Boolean Value: "<<value<<endl;
-        Event<JsonEventType> jsonEvent(JsonEventType::BOOL_EVENT, value);
-        eventDispatcher.post(jsonEvent);
+        _JsonEventType = JsonEventType::BOOL_EVENT;
+        _value = value;
         
     }
     else if (eventType == 11) {
         // value integer
         // cout<<"Json Stream Event: "<<"Exponent Value: "<<stof(value)<<endl;
-        Event<JsonEventType> jsonEvent(JsonEventType::EXPONENT_EVENT, value);
-        eventDispatcher.post(jsonEvent);
+        _JsonEventType = JsonEventType::EXPONENT_EVENT;
+        _value = value;
         
     }
     else if (eventType == 12) {
         // value integer
         // cout<<"Json Stream Event: "<<"NULL Value: "<<value<<endl;
-        Event<JsonEventType> jsonEvent(JsonEventType::NULL_EVENT, value);
-        eventDispatcher.post(jsonEvent);
+        _JsonEventType = JsonEventType::NULL_EVENT;
+        _value = value;
         
+    }
+    if (eventType==0 || (eventType>=2 && eventType<=12)) {
+        Event<JsonEventType> jsonEvent(_JsonEventType, _value);
+        eventDispatcher.post(jsonEvent);
+        JsonStreamEvent jsonStreamEvent(topicName, make_pair(_JsonEventType, value));
+        eventDispatcherV1.post(jsonStreamEvent);
     }
 }
 

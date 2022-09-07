@@ -3,6 +3,30 @@
 #include <string>
 #include<bits/stdc++.h>
 using namespace std;
+
+enum TokenType{
+    OPERATOR_TOKEN,
+    STRING_TOKEN,
+    NUMBER_TOKEN,
+    EXP_TOKEN,
+    FLOAT_TOKEN,
+    INTEGER_TOKEN,
+    BOOLEAN_TOKEN,
+    NULL_TOKEN    
+};
+
+enum JsonEventType {
+    KEY_EVENT,
+    STRING_EVENT,
+    BOOL_EVENT,
+    NULL_EVENT,
+    INTEGER_EVENT,
+    FLOAT_EVENT,
+    EXPONENT_EVENT,
+    OBJECT_LIST_EVENT,
+    Document_END
+};
+
 /**
   @class Event
   @brief Base class for all events
@@ -29,4 +53,18 @@ public:
 private:
 };
 
+template <typename T>
+class JsonStreamEvent{
+protected:
+  T _type;
+  pair<JsonEventType, string> _name;
+  bool _handled = false;
+public:
+  JsonStreamEvent() = default;
+  JsonStreamEvent(T type, const std::pair<JsonEventType, string>& name = "") : _type(type), _name(name){};
+  inline const string type() const { return _type;};
+  inline const std::pair<JsonEventType, string>& getName() const { return _name;};
+  virtual bool isHandled(){ return _handled;};
+private:
+};
 #endif
