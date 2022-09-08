@@ -24,7 +24,16 @@ enum JsonEventType {
     FLOAT_EVENT,
     EXPONENT_EVENT,
     OBJECT_LIST_EVENT,
-    Document_END
+    Document_END,
+    VALUE_EVENT,
+};
+
+class StreamToken {
+  public:
+    JsonEventType token_type;
+    string value;
+    StreamToken(JsonEventType  _token_type, string _value) : token_type(_token_type), value(_value) {};
+
 };
 
 /**
@@ -57,13 +66,13 @@ template <typename T>
 class JsonStreamEvent{
 protected:
   T _type;
-  pair<JsonEventType, string> _name;
+  StreamToken stream_token;
   bool _handled = false;
 public:
   JsonStreamEvent() = default;
-  JsonStreamEvent(T type, const std::pair<JsonEventType, string>& name = "") : _type(type), _name(name){};
+  JsonStreamEvent(T type, const StreamToken& name) : _type(type), stream_token(name){};
   inline const string type() const { return _type;};
-  inline const std::pair<JsonEventType, string>& getName() const { return _name;};
+  inline const StreamToken& getStreamToken() const { return stream_token;};
   virtual bool isHandled(){ return _handled;};
 private:
 };

@@ -201,7 +201,7 @@ void handle_value_found() {
 }
 
 void handleEventV1(const JsonStreamEvent<string>& event) { 
-    cout<<"New event check: "<<event.getName().first<<" "<<event.getName().second<<endl;
+    cout<<"New event check: "<<event.getStreamToken().token_type<<" "<<event.getStreamToken().value<<endl;
 
 }
 
