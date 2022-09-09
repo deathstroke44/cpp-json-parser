@@ -31,8 +31,9 @@ enum JsonEventType {
 class StreamToken {
   public:
     JsonEventType token_type;
+    JsonEventType token_sub_type;
     string value;
-    StreamToken(JsonEventType  _token_type, string _value) : token_type(_token_type), value(_value) {};
+    StreamToken(JsonEventType  _token_type, JsonEventType  _token_sub_type, string _value) : token_type(_token_type), token_sub_type(_token_sub_type), value(_value) {};
     StreamToken() = default;
 
 };

@@ -113,84 +113,94 @@ void setEventHandler(void (*func)(const JsonStreamEvent<string>&)) {
 }
 
 void emitEvent(int eventType, string value, bool listElement) {
+    JsonEventType _JsonSubEventType = JsonEventType::STRING_EVENT;
     JsonEventType _JsonEventType = JsonEventType::STRING_EVENT;
     string _value = "";
     if (eventType == 0) {
         // value string
         // cout<<"Json Stream Event: "<<"Value: "<<value<<endl;
-        _JsonEventType = JsonEventType::STRING_EVENT;
+        _JsonSubEventType = JsonEventType::STRING_EVENT;
+        _JsonEventType = JsonEventType::VALUE_EVENT;
         _value = value;
         
     }
     else if (eventType == 2) {
         // value key
         // cout<<"Json Stream Event: "<<"key: "<<value<<endl;
-        _JsonEventType = JsonEventType::KEY_EVENT;
+        _JsonSubEventType = JsonEventType::KEY_EVENT;
+        _JsonEventType = _JsonSubEventType;
         _value = value;
     }
     else if (eventType == 3) {
         // list started
         // cout<<"Json Stream Event: "<<"list started"<<endl;
-        _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _JsonSubEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _JsonEventType = _JsonSubEventType;
         _value = "list started";
     }
     else if (eventType == 4) {
         // list ended
         // cout<<"Json Stream Event: "<<"list ended"<<endl;
-        _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _JsonSubEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _JsonEventType = _JsonSubEventType;
         _value = "list ended";
     }
     else if (eventType == 6) {
         // object started
         // cout<<"Json Stream Event: "<<"object started"<<endl;
-        _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _JsonSubEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _JsonEventType = _JsonSubEventType;
         _value = "object started";
     }
     else if (eventType == 7) {
         // object ended
         // cout<<"Json Stream Event: "<<"object ended"<<endl;
-        _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _JsonSubEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _JsonEventType = _JsonSubEventType;
         _value = "object ended";
     }
     else if (eventType == 8) {
         // value integer
         // cout<<"Json Stream Event: "<<"Integer Value: "<<stoll(value)<<endl;
-        _JsonEventType = JsonEventType::INTEGER_EVENT;
+        _JsonSubEventType = JsonEventType::INTEGER_EVENT;
+        _JsonEventType = JsonEventType::VALUE_EVENT;
         _value = value;
         
     }
     else if (eventType == 9) {
         // value integer
         // cout<<"Json Stream Event: "<<"Float Value: "<<stof(value)<<endl;
-        _JsonEventType = JsonEventType::FLOAT_EVENT;
+        _JsonSubEventType = JsonEventType::FLOAT_EVENT;
+        _JsonEventType = VALUE_EVENT;
         _value = value;
         
     }
     else if (eventType == 10) {
         // value integer
         // cout<<"Json Stream Event: "<<"Boolean Value: "<<value<<endl;
-        _JsonEventType = JsonEventType::BOOL_EVENT;
+        _JsonSubEventType = JsonEventType::BOOL_EVENT;
+        _JsonEventType = VALUE_EVENT;
         _value = value;
         
     }
     else if (eventType == 11) {
         // value integer
         // cout<<"Json Stream Event: "<<"Exponent Value: "<<stof(value)<<endl;
-        _JsonEventType = JsonEventType::EXPONENT_EVENT;
+        _JsonSubEventType = JsonEventType::EXPONENT_EVENT;
+        _JsonEventType = VALUE_EVENT;
         _value = value;
         
     }
     else if (eventType == 12) {
         // value integer
         // cout<<"Json Stream Event: "<<"NULL Value: "<<value<<endl;
-        _JsonEventType = JsonEventType::NULL_EVENT;
+        _JsonSubEventType = JsonEventType::NULL_EVENT;
+        _JsonEventType = VALUE_EVENT;
         _value = value;
         
     }
     if (eventType==0 || (eventType>=2 && eventType<=12)) {
-        Event<JsonEventType> jsonEvent(_JsonEventType, _value);
-        eventDispatcher.post(jsonEvent);
-        JsonStreamEvent jsonStreamEvent(topicName, StreamToken(_JsonEventType, _value));
+        JsonStreamEvent jsonStreamEvent(topicName, StreamToken(_JsonEventType, _JsonSubEventType, _value));
         eventDispatcherV1.post(jsonStreamEvent);
     }
 }

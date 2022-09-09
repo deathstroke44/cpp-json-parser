@@ -33,12 +33,12 @@ void remove_last_delimeter() {
 void addEventInDesiredResult(const StreamToken streamToken) {
     remove_delimeter_not_exists(streamToken);
     if(streamToken.token_type == JsonEventType::KEY_EVENT) { traversedJson += "\""+streamToken.value+ "\""+" : ";}
-    if(streamToken.token_type == JsonEventType::STRING_EVENT) { traversedJson += "\""+streamToken.value+ "\",";}
-    if(streamToken.token_type == JsonEventType::BOOL_EVENT) { traversedJson += streamToken.value+ ","; }
-    if(streamToken.token_type == JsonEventType::NULL_EVENT) { traversedJson += streamToken.value+ ",";}
-    if(streamToken.token_type == JsonEventType::INTEGER_EVENT) {  traversedJson += streamToken.value+ ",";}
-    if(streamToken.token_type == JsonEventType::FLOAT_EVENT) {  traversedJson += streamToken.value+ ",";}
-    if(streamToken.token_type == JsonEventType::EXPONENT_EVENT) {traversedJson += streamToken.value+ ",";}
+    if(streamToken.token_type == VALUE_EVENT) {
+        if(streamToken.token_sub_type == JsonEventType::STRING_EVENT) { traversedJson += "\""+streamToken.value+ "\",";}
+        else {
+            traversedJson += streamToken.value+ ",";
+        }
+    }
     if(streamToken.token_type == JsonEventType::OBJECT_LIST_EVENT) {
         if (streamToken.value == "list started") {traversedJson.push_back('[');}
         else if (streamToken.value == "list ended") {
@@ -197,11 +197,6 @@ void handle_value_found() {
     }
 }
 
-void handleEventV1(const JsonStreamEvent<string>& event) { 
-    cout<<"New event check: "<<event.getStreamToken().token_type<<" "<<event.getStreamToken().value<<endl;
-
-}
-
 void handleEvent(const JsonStreamEvent<string>& event) {
     current_event = event;
     // handle event as your need. I have just added this code for testing and demo purpose.
@@ -210,8 +205,7 @@ void handleEvent(const JsonStreamEvent<string>& event) {
     if (key_found == 0 || key_found ==1)
     {
         if(streamToken.token_type == JsonEventType::KEY_EVENT) { push_string_key(streamToken.value);}
-        if (streamToken.token_type == JsonEventType::STRING_EVENT || streamToken.token_type == JsonEventType::BOOL_EVENT ||streamToken.token_type == JsonEventType::NULL_EVENT ||
-        streamToken.token_type == JsonEventType::INTEGER_EVENT ||streamToken.token_type == JsonEventType::FLOAT_EVENT ||streamToken.token_type == JsonEventType::EXPONENT_EVENT) {
+        if (streamToken.token_type == VALUE_EVENT) {
             handle_value_found();
 
         }
