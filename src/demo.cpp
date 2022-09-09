@@ -12,17 +12,15 @@ class KeyClass {
 vector<KeyClass> key_stack;
 vector<int> list_index_stack;
 vector<string> part_of_stack;
-pair<JsonEventType,string> last_event = make_pair(JsonEventType::NULL_EVENT, "");
 int key_found = 0; // 0 not found , 1 traversing, 2 ended
 string current_key="";
 string desired_key = "skills"; // skills.nested1.nested3.key2  skills.lang [0].id
-Event<JsonEventType> current_event;
-Event<JsonEventType> last_desired_event;
+JsonStreamEvent<string> current_event;
 string traversedJson = "";
 
-void remove_delimeter_not_exists(const Event<JsonEventType>& event) {
-    bool flag = event.type() == JsonEventType::OBJECT_LIST_EVENT && ((event.getName() == "list ended") ||
-    (event.getName() == "object ended"));
+void remove_delimeter_not_exists(const StreamToken streamToken) {
+    bool flag = streamToken.token_type == JsonEventType::OBJECT_LIST_EVENT && ((streamToken.value == "list ended") ||
+    (streamToken.value == "object ended"));
     if (flag && traversedJson.size()>0 && traversedJson[traversedJson.size()-1]==',') {
         traversedJson.pop_back();
     }
@@ -32,28 +30,27 @@ void remove_last_delimeter() {
         traversedJson.pop_back();
     }
 }
-void addEventInDesiredResult(const Event<JsonEventType>& event) {
-    remove_delimeter_not_exists(event);
-    if(event.type() == JsonEventType::KEY_EVENT) { traversedJson += "\""+event.getName()+ "\""+" : ";}
-    if(event.type() == JsonEventType::STRING_EVENT) { traversedJson += "\""+event.getName()+ "\",";}
-    if(event.type() == JsonEventType::BOOL_EVENT) { traversedJson += event.getName()+ ","; }
-    if(event.type() == JsonEventType::NULL_EVENT) { traversedJson += event.getName()+ ",";}
-    if(event.type() == JsonEventType::INTEGER_EVENT) {  traversedJson += event.getName()+ ",";}
-    if(event.type() == JsonEventType::FLOAT_EVENT) {  traversedJson += event.getName()+ ",";}
-    if(event.type() == JsonEventType::EXPONENT_EVENT) {traversedJson += event.getName()+ ",";}
-    if(event.type() == JsonEventType::OBJECT_LIST_EVENT) {
-        if (event.getName() == "list started") {traversedJson.push_back('[');}
-        else if (event.getName() == "list ended") {
+void addEventInDesiredResult(const StreamToken streamToken) {
+    remove_delimeter_not_exists(streamToken);
+    if(streamToken.token_type == JsonEventType::KEY_EVENT) { traversedJson += "\""+streamToken.value+ "\""+" : ";}
+    if(streamToken.token_type == JsonEventType::STRING_EVENT) { traversedJson += "\""+streamToken.value+ "\",";}
+    if(streamToken.token_type == JsonEventType::BOOL_EVENT) { traversedJson += streamToken.value+ ","; }
+    if(streamToken.token_type == JsonEventType::NULL_EVENT) { traversedJson += streamToken.value+ ",";}
+    if(streamToken.token_type == JsonEventType::INTEGER_EVENT) {  traversedJson += streamToken.value+ ",";}
+    if(streamToken.token_type == JsonEventType::FLOAT_EVENT) {  traversedJson += streamToken.value+ ",";}
+    if(streamToken.token_type == JsonEventType::EXPONENT_EVENT) {traversedJson += streamToken.value+ ",";}
+    if(streamToken.token_type == JsonEventType::OBJECT_LIST_EVENT) {
+        if (streamToken.value == "list started") {traversedJson.push_back('[');}
+        else if (streamToken.value == "list ended") {
             traversedJson.push_back(']');
             traversedJson.push_back(',');
         }
-        else if (event.getName() == "object started") {traversedJson.push_back('{');}
-        else if (event.getName() == "object ended") {
+        else if (streamToken.value == "object started") {traversedJson.push_back('{');}
+        else if (streamToken.value == "object ended") {
             traversedJson.push_back('}');
             traversedJson.push_back(',');
         }
     }
-    last_desired_event = event;
 }
 bool current_key_part_of_desired_key() { return current_key.rfind(desired_key,0) == 0;}
 void getProcessedKey(string type) {
@@ -94,7 +91,7 @@ void pop_key(bool need_to_added_ine_event = false) {
     if (!current_key_part_of_desired_key() && key_found==1) {
         key_found = 2;
         if (need_to_added_ine_event) {
-            addEventInDesiredResult(current_event);
+            addEventInDesiredResult(current_event.getStreamToken());
         }
     }
 }
@@ -107,7 +104,7 @@ void increment_index_key() {
         getProcessedKey("expand");
         if (current_key_part_of_desired_key() && key_found==0) {
             key_found = 1;
-            addEventInDesiredResult(current_event);
+            addEventInDesiredResult(current_event.getStreamToken());
         }
         else if (!current_key_part_of_desired_key() && key_found==1) {
             key_found = 2;
@@ -128,7 +125,7 @@ void push_index_key(int index) {
     getProcessedKey("expand");
     if (current_key_part_of_desired_key() && key_found==0) {
         key_found = 1;
-        addEventInDesiredResult(current_event);
+        addEventInDesiredResult(current_event.getStreamToken());
     }
     if (!current_key_part_of_desired_key() && key_found==1) {
         key_found = 2;
@@ -205,46 +202,46 @@ void handleEventV1(const JsonStreamEvent<string>& event) {
 
 }
 
-void handleEvent(const Event<JsonEventType>& event) {
+void handleEvent(const JsonStreamEvent<string>& event) {
     current_event = event;
     // handle event as your need. I have just added this code for testing and demo purpose.
     int prev_key_found = key_found;
+    StreamToken streamToken = event.getStreamToken();
     if (key_found == 0 || key_found ==1)
     {
-        if(event.type() == JsonEventType::KEY_EVENT) { push_string_key(event.getName());}
-        if (event.type() == JsonEventType::STRING_EVENT || event.type() == JsonEventType::BOOL_EVENT ||event.type() == JsonEventType::NULL_EVENT ||
-        event.type() == JsonEventType::INTEGER_EVENT ||event.type() == JsonEventType::FLOAT_EVENT ||event.type() == JsonEventType::EXPONENT_EVENT) {
+        if(streamToken.token_type == JsonEventType::KEY_EVENT) { push_string_key(streamToken.value);}
+        if (streamToken.token_type == JsonEventType::STRING_EVENT || streamToken.token_type == JsonEventType::BOOL_EVENT ||streamToken.token_type == JsonEventType::NULL_EVENT ||
+        streamToken.token_type == JsonEventType::INTEGER_EVENT ||streamToken.token_type == JsonEventType::FLOAT_EVENT ||streamToken.token_type == JsonEventType::EXPONENT_EVENT) {
             handle_value_found();
 
         }
-        if(event.type() == JsonEventType::OBJECT_LIST_EVENT) {
-            if (event.getName() == "list started") {
+        if(streamToken.token_type == JsonEventType::OBJECT_LIST_EVENT) {
+            if (streamToken.value == "list started") {
                 set_part_of_value("list");
                 set_new_list_started();
             }
-            else if (event.getName() == "list ended") {
+            else if (streamToken.value == "list ended") {
                 set_last_list_ended();
             }
-            else if (event.getName() == "object started") {
+            else if (streamToken.value == "object started") {
                 if (get_part_of_value() == "list") {
                     set_new_value_added_in_list();
                 }
                 set_part_of_value("object");
             }
-            else if (event.getName() == "object ended") {
+            else if (streamToken.value == "object ended") {
                 set_last_object_ended();
             }
 
         }
         if(key_found == 1 && prev_key_found == 1) {
-            addEventInDesiredResult(current_event);
+            addEventInDesiredResult(current_event.getStreamToken());
         }
         else if(key_found == 2 && prev_key_found != 2) {
             remove_last_delimeter();
             std::cout << "Got value of desired key: " << desired_key<<endl<<traversedJson<<endl;
         }
     }
-    last_event = make_pair(event.type(), event.getName());
 }
 
 int main() {
@@ -254,16 +251,7 @@ int main() {
     // Subscribing to all events is not necessary. 
     // There is no constraint that you have to use same fuction for all events
     {
-        json_stream_parser.eventDispatcher.subscribe( JsonEventType::KEY_EVENT, handleEvent );
-        json_stream_parser.eventDispatcher.subscribe( JsonEventType::STRING_EVENT, handleEvent );
-        json_stream_parser.eventDispatcher.subscribe( JsonEventType::BOOL_EVENT, handleEvent );
-        json_stream_parser.eventDispatcher.subscribe( JsonEventType::NULL_EVENT, handleEvent );
-        json_stream_parser.eventDispatcher.subscribe( JsonEventType::INTEGER_EVENT, handleEvent );
-        json_stream_parser.eventDispatcher.subscribe( JsonEventType::FLOAT_EVENT, handleEvent );
-        json_stream_parser.eventDispatcher.subscribe( JsonEventType::EXPONENT_EVENT, handleEvent );
-        json_stream_parser.eventDispatcher.subscribe( JsonEventType::OBJECT_LIST_EVENT, handleEvent );
-        json_stream_parser.eventDispatcher.subscribe( JsonEventType::Document_END, handleEvent );
-        json_stream_parser.setEventHandler(handleEventV1);
+        json_stream_parser.setEventHandler(handleEvent);
     }
 
     json_stream_parser.start_json_streaming(fileName);

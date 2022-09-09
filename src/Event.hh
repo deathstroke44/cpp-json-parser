@@ -33,6 +33,7 @@ class StreamToken {
     JsonEventType token_type;
     string value;
     StreamToken(JsonEventType  _token_type, string _value) : token_type(_token_type), value(_value) {};
+    StreamToken() = default;
 
 };
 

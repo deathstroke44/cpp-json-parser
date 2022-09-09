@@ -190,7 +190,7 @@ void emitEvent(int eventType, string value, bool listElement) {
     if (eventType==0 || (eventType>=2 && eventType<=12)) {
         Event<JsonEventType> jsonEvent(_JsonEventType, _value);
         eventDispatcher.post(jsonEvent);
-        JsonStreamEvent jsonStreamEvent(topicName, StreamToken(_JsonEventType, value));
+        JsonStreamEvent jsonStreamEvent(topicName, StreamToken(_JsonEventType, _value));
         eventDispatcherV1.post(jsonStreamEvent);
     }
 }
