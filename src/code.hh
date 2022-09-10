@@ -86,6 +86,7 @@ pair<TokenType, string> latest_token = make_pair(NULL_TOKEN,"");
 public:
 Dispatcher<JsonEventType> eventDispatcher = Dispatcher<JsonEventType>();
 DispatcherV2<string> eventDispatcherV1 = DispatcherV2<string>();
+bool stop_emitting_event = false;
 string topicName = "jsonStreamTopic";
 // void stream_token(pair<TokenType, string> token, bool print_key_end_event);
 // void handle_whitespace_state(char &c, int &char_code);
@@ -637,7 +638,7 @@ void start_json_streaming(string fileName) {
     fs >> std::noskipws;
     char c;
     int idx = 0;
-    while (true) 
+    while (true && !stop_emitting_event) 
     { 
         if (should_advance) {
             if (fs >> c) {

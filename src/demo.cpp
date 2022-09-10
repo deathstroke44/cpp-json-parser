@@ -17,7 +17,7 @@ string current_key="";
 string desired_key = "skills"; // skills.nested1.nested3.key2  skills.lang [0].id
 JsonStreamEvent<string> current_event;
 string traversedJson = "";
-
+Json_stream_parser json_stream_parser;
 void remove_delimeter_not_exists(const StreamToken streamToken) {
     bool flag = streamToken.token_type == JsonEventType::OBJECT_LIST_EVENT && ((streamToken.value == "list ended") ||
     (streamToken.value == "object ended"));
@@ -237,13 +237,14 @@ void handleEvent(const JsonStreamEvent<string>& event) {
         }
         else if(key_found == 2 && prev_key_found != 2) {
             remove_last_delimeter();
+            json_stream_parser.stop_emitting_event = true;
             std::cout << "Got value of desired key: " << desired_key<<endl<<traversedJson<<endl;
         }
     }
 }
 
 int main(int argc, char** argv) {
-    Json_stream_parser json_stream_parser = Json_stream_parser();
+    json_stream_parser = Json_stream_parser();
     string _fileName(argv[1]);
     string _desired_key(argv[2]);
     desired_key= _desired_key;
