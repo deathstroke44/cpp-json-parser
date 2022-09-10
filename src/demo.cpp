@@ -238,9 +238,13 @@ void handleEvent(const JsonStreamEvent<string>& event) {
     }
 }
 
-int main() {
+int main(int argc, char** argv) {
     Json_stream_parser json_stream_parser = Json_stream_parser();
-    string fileName = "code-test.json"; // code-test.json large-file.json
+    string _fileName(argv[1]);
+    string _desired_key(argv[2]);
+    desired_key= _desired_key;
+    string fileName = "tests/Json files/"+_fileName;
+    // code-test.json large-file.json
     // subscribe to the events those are needed for your purpose
     // Subscribing to all events is not necessary. 
     // There is no constraint that you have to use same fuction for all events

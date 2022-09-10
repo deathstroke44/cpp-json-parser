@@ -641,7 +641,6 @@ void start_json_streaming(string fileName) {
     { 
         if (should_advance) {
             if (fs >> c) {
-                // std::cout <<endl<< c << endl;
                 start_tokenize_v1(c);
             }
             else {
