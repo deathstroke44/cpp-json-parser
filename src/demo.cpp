@@ -90,8 +90,12 @@ void pop_key(bool need_to_added_ine_event = false) {
     getProcessedKey("deflate");
     if (!current_key_part_of_desired_key() && key_found==1) {
         key_found = 2;
+        StreamToken current_stream_token = current_event.getStreamToken();
+        if (current_stream_token.token_sub_type == OBJECT_LIST_EVENT && current_stream_token.value == "list ended") {
+            need_to_added_ine_event = !(traversedJson.length() && traversedJson[0] != '[');
+        }
         if (need_to_added_ine_event) {
-            addEventInDesiredResult(current_event.getStreamToken());
+            addEventInDesiredResult(current_stream_token);
         }
     }
 }

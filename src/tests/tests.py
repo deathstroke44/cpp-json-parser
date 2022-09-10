@@ -21,6 +21,10 @@ tests = [
     {
         'fileName': 'code-test.json',
         'query': 'skills.lang[0].C[1]'
+    },
+    {
+        'fileName': 'code-test.json',
+        'query': 'skills.nested1.nested3'
     }
 ]
 os.system('clear')
