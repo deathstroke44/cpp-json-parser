@@ -80,6 +80,4 @@ Getting a Document_END event indicates that the parser has already scanned the w
 
 **[Demo.cpp](https://github.com/deathstroke44/cpp-json-parser/blob/main/src/demo.cpp) file will give you a better idea of how to use this json stream parser.**
 
-**
-[tests folder](https://github.com/deathstroke44/cpp-json-parser/tree/main/src/tests) contains some JSON files and a [python script](https://github.com/deathstroke44/cpp-json-parser/blob/main/src/tests/tests.py) that will run some test cases of my JSON path query code.  
-**
+**[tests folder](https://github.com/deathstroke44/cpp-json-parser/tree/main/src/tests) contains some JSON files and a [python script](https://github.com/deathstroke44/cpp-json-parser/blob/main/src/tests/tests.py) that will run some test cases of my JSON path query code.**
