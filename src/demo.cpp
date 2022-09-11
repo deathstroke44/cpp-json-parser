@@ -1,4 +1,4 @@
-#include "code.hh"
+#include "library/code.hh"
 using namespace std;
 class KeyClass {
     public:

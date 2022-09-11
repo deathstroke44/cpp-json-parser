@@ -45,10 +45,19 @@ tests = [
     {
         'fileName': 'large-file.json',
         'query': '[0].repo.url'
+    },
+    {
+        'fileName': 'Sample-employee-JSON-data.json',
+        'query': 'Employees[0]'
+    },
+    {
+        'fileName': 'Sample-employee-JSON-data.json',
+        'query': 'Employees[0].jobTitle'
     }
 ]
 os.system('clear')
+os.system('g++ demo.cpp')
 for test in tests:
     print('Test Case: file name:',test['fileName'], 'query:',test['query'])
-    sys_call= 'g++ demo.cpp && ./a.out '+ test['fileName']+' '+ test['query']
+    sys_call= './a.out '+ test['fileName']+' '+ test['query']
     os.system(sys_call)
