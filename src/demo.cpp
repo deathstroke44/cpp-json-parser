@@ -28,6 +28,19 @@ string traversedJson = "";
 map<string,string> traversedJsonMap;
 Json_stream_parser json_stream_parser;
 vector<KeyClass> desired_key_list;
+string getDummyKey() {
+    string str="";
+    for(int i=0;i<key_stack.size();i++) {
+        KeyClass kc= key_stack[i];
+        if(kc.index_key) {
+            str = str + "." + "["+to_string(kc.index)+"]";
+        }
+        else{
+            str = str +"."+kc.key;
+        }
+    }
+    return str;
+}
 void remove_delimeter_not_exists(const StreamToken streamToken) {
     bool flag = streamToken.token_type == JsonEventType::OBJECT_LIST_EVENT && ((streamToken.value == "list ended") ||
     (streamToken.value == "object ended"));
@@ -126,7 +139,7 @@ void pop_key(bool need_to_added_ine_event = false) {
             need_to_added_ine_event = !(traversedJson.length() && traversedJson[0] != '[');
         }
         if (need_to_added_ine_event) {
-            addEventInDesiredResult(current_stream_token);
+            // addEventInDesiredResult(current_stream_token);
         }
     }
 }
@@ -139,7 +152,7 @@ void increment_index_key() {
         getProcessedKey("expand");
         if (current_key_part_of_desired_key() && key_found==0) {
             key_found = 1;
-            addEventInDesiredResult(current_event.getStreamToken());
+            // addEventInDesiredResult(current_event.getStreamToken());
         }
         else if (!current_key_part_of_desired_key() && key_found==1) {
             key_found = 2;
@@ -160,7 +173,7 @@ void push_index_key(int index) {
     getProcessedKey("expand");
     if (current_key_part_of_desired_key() && key_found==0) {
         key_found = 1;
-        addEventInDesiredResult(current_event.getStreamToken());
+        // addEventInDesiredResult(current_event.getStreamToken());
     }
     if (!current_key_part_of_desired_key() && key_found==1) {
         key_found = 2;
@@ -224,12 +237,7 @@ void set_part_of_value(string value) {
 }
 
 void handle_value_found() {
-    if (get_part_of_value() == "object") {
-        pop_key(true);
-    }
-    else if (get_part_of_value() == "list") {
-        set_new_value_added_in_list();
-    }
+    
 }
 
 void handleEvent(const JsonStreamEvent<string>& event) {
@@ -237,11 +245,26 @@ void handleEvent(const JsonStreamEvent<string>& event) {
     // handle event as your need. I have just added this code for testing and demo purpose.
     int prev_key_found = key_found;
     StreamToken streamToken = event.getStreamToken();
+    bool ignoreEventFlag = false;
+    bool shouldAddThisEvent = false;
+    bool currentlyValid =current_key_part_of_desired_key();
     if (key_found == 0 || key_found ==1)
     {
-        if(streamToken.token_type == JsonEventType::KEY_EVENT) { push_string_key(streamToken.value);}
+        if(streamToken.token_type == JsonEventType::KEY_EVENT) {
+            if (!current_key_part_of_desired_key()) {
+                ignoreEventFlag = true;
+            } 
+            push_string_key(streamToken.value);
+        }
         if (streamToken.token_type == VALUE_EVENT) {
             handle_value_found();
+            if (get_part_of_value() == "object") {
+                pop_key(true);
+                shouldAddThisEvent = true;
+            }
+            else if (get_part_of_value() == "list") {
+                set_new_value_added_in_list();
+            }
 
         }
         if(streamToken.token_type == JsonEventType::OBJECT_LIST_EVENT) {
@@ -263,14 +286,20 @@ void handleEvent(const JsonStreamEvent<string>& event) {
             }
 
         }
-        if(key_found == 1 && prev_key_found == 1) {
+        bool fg = current_key_part_of_desired_key();
+        if(fg && !ignoreEventFlag) {
             addEventInDesiredResult(current_event.getStreamToken());
         }
-        else if(key_found == 2 && prev_key_found != 2) {
-            remove_last_delimeter();
-            json_stream_parser.stop_emitting_event = true;
-            std::cout << "Got value of desired key: "<<endl<<traversedJson<<endl;
+        else if(!fg && shouldAddThisEvent && currentlyValid) {
+            addEventInDesiredResult(streamToken);
         }
+        else if(key_found == 2 && prev_key_found != 2) {
+        }
+    }
+    if (streamToken.token_type== Document_END) {
+        remove_last_delimeter();
+        json_stream_parser.stop_emitting_event = true;
+        std::cout << "Got value of desired key: "<<endl<<traversedJson<<endl;
     }
 }
 
@@ -322,9 +351,9 @@ void splitDesiredKey() {
     if (curr.length()) {
         addKey(list_index, curr);
     }
-    for (int i=0;i<desired_key_list.size();i++) {
-        cout<<desired_key_list[i].index<<" "<<desired_key_list[i].index_key<<" "<<desired_key_list[i].key<<" "<<desired_key_list[i].any_index<<" "<<desired_key_list[i].any_key<<endl;
-    }
+    // for (int i=0;i<desired_key_list.size();i++) {
+    //     cout<<desired_key_list[i].index<<" "<<desired_key_list[i].index_key<<" "<<desired_key_list[i].key<<" "<<desired_key_list[i].any_index<<" "<<desired_key_list[i].any_key<<endl;
+    // }
 }
 
 int main(int argc, char** argv) {
@@ -336,6 +365,8 @@ int main(int argc, char** argv) {
     KeyClass keyClass("$",true);
     key_stack.push_back(keyClass);
     splitDesiredKey();
+    traversedJsonMap["99"] ="Samin";
+    cout<<traversedJsonMap.find("99")->first<<" "<<traversedJsonMap.find("99")->second<<endl;
     // code-test.json large-file.json
     // subscribe to the events those are needed for your purpose
     // Subscribing to all events is not necessary. 

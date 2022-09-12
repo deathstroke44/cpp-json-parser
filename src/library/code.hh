@@ -658,7 +658,7 @@ void start_json_streaming(string fileName) {
         }
          
     }
-    Event<JsonEventType> jsonEvent(JsonEventType::Document_END, "");
-    eventDispatcher.post(jsonEvent);
+    JsonStreamEvent jsonStreamEvent(topicName, StreamToken(JsonEventType::Document_END, JsonEventType::Document_END, ""));
+    eventDispatcherV1.post(jsonStreamEvent);
 }
 };

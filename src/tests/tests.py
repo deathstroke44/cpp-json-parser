@@ -73,3 +73,7 @@ for test in tests:
     print('Test Case: file name:',test['fileName'], 'query:',test['query'])
     sys_call= './a.out '+ test['fileName']+' '+ test['query']
     os.system(sys_call)
+# test = tests[0]
+# print('Test Case: file name:',test['fileName'], 'query:',test['query'])
+# sys_call= './a.out '+ test['fileName']+' '+ test['query']
+# os.system(sys_call)
