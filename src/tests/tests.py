@@ -4,55 +4,67 @@ relative_path = 'tests/Json files/'
 tests = [
     {
         'fileName': 'code-test.json',
-        'query': 'skills'
+        'query': '$.skills'
     },
     {
         'fileName': 'code-test.json',
-        'query': 'skills.lang'
+        'query': '$.skills.lang'
     },
     {
         'fileName': 'code-test.json',
-        'query': 'skills.lang[0]'
+        'query': '$.skills.lang[0]'
     },
     {
         'fileName': 'code-test.json',
-        'query': 'skills.lang[0].C'
+        'query': '$.skills.lang[1]'
     },
     {
         'fileName': 'code-test.json',
-        'query': 'skills.lang[0].C[1]'
+        'query': '$.skills.lang[0].C'
     },
     {
         'fileName': 'code-test.json',
-        'query': 'skills.nested1.nested3'
+        'query': '$.skills.lang[0].C[1]'
     },
     {
         'fileName': 'code-test.json',
-        'query': 'skills.nested1.nested3.key2'
+        'query': '$.skills.nested1.nested3'
+    },
+    {
+        'fileName': 'code-test.json',
+        'query': '$.skills.nested1.nested3.key2'
     },
     {
         'fileName': 'large-file.json',
-        'query': '[0]'
+        'query': '$.[0]'
     },
     {
         'fileName': 'large-file.json',
-        'query': '[0].actor'
+        'query': '$.[0].actor'
     },
     {
         'fileName': 'large-file.json',
-        'query': '[0].repo'
+        'query': '$.[0].repo'
     },
     {
         'fileName': 'large-file.json',
-        'query': '[0].repo.url'
+        'query': '$.[0].repo.url'
     },
     {
         'fileName': 'Sample-employee-JSON-data.json',
-        'query': 'Employees[0]'
+        'query': '$.Employees[0]'
     },
     {
         'fileName': 'Sample-employee-JSON-data.json',
-        'query': 'Employees[0].jobTitle'
+        'query': '$.Employees[0].jobTitle'
+    },
+    {
+        'fileName': 'Sample-employee-JSON-data.json',
+        'query': '$.Employees[*].jobTitle'
+    },
+    {
+        'fileName': 'Sample-employee-JSON-data.json',
+        'query': '$.Employees[*]..jobTitle'
     }
 ]
 os.system('clear')
