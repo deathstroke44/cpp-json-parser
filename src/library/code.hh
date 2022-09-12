@@ -12,9 +12,9 @@ using namespace std;
 #define mymin(a,b,c) min(a,min(b,c))
 #define mymiddle(a,b,c) a+b+c-max(a,max(b,c))-min(a,min(b,c))
 #define check(n, pos) (n & (1<<pos))
-#define set(n, pos) (n | (1<<pos))
 #define sq(x) ((x)*(x))
 typedef long long int li;
+
 
 
 
@@ -25,6 +25,10 @@ class JsonEvent : public Event<JsonEventType>
     JsonEvent(JsonEventType jsonEventType, string value) : Event<JsonEventType>(jsonEventType,  value){};
     virtual ~JsonEvent() = default;
 };
+
+
+
+
 
 void onEvent1(const Event<JsonEventType>& event){
   if(event.type() == JsonEventType::KEY_EVENT) { std::cout << "EMITTED Event TYPE: KEY " << event.getName() << std::endl;}

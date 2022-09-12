@@ -4,20 +4,30 @@ class KeyClass {
     public:
         bool index_key = false;
         int index;
+        bool any_index = false;
+        bool any_key = false;
         string key;
         KeyClass() = default;
-        KeyClass(int index) {this->index = index;};
-        KeyClass(string key, bool dummy) {this->key = key; index_key = true; this->index = 0;};
+        KeyClass(int index) {
+            this->index = index;
+            any_index = (index == -2);
+        };
+        KeyClass(string key, bool dummy) {
+            this->key = key; index_key = true; this->index = 0;
+            any_key = (key.length()==0);
+        };
 };
 vector<KeyClass> key_stack;
 vector<int> list_index_stack;
 vector<string> part_of_stack;
 int key_found = 0; // 0 not found , 1 traversing, 2 ended
-string current_key="";
+string current_key="$.";
 string desired_key = "skills"; // skills.nested1.nested3.key2  skills.lang [0].id
 JsonStreamEvent<string> current_event;
 string traversedJson = "";
+map<string,string> traversedJsonMap;
 Json_stream_parser json_stream_parser;
+vector<KeyClass> desired_key_list;
 void remove_delimeter_not_exists(const StreamToken streamToken) {
     bool flag = streamToken.token_type == JsonEventType::OBJECT_LIST_EVENT && ((streamToken.value == "list ended") ||
     (streamToken.value == "object ended"));
@@ -52,7 +62,28 @@ void addEventInDesiredResult(const StreamToken streamToken) {
         }
     }
 }
-bool current_key_part_of_desired_key() { return current_key.rfind(desired_key,0) == 0;}
+bool current_key_part_of_desired_key() { 
+    // return current_key.rfind(desired_key,0) == 0;
+    if (desired_key_list.size()<=key_stack.size()) {
+        for (int i=0;i<desired_key_list.size();i++) {
+            KeyClass kcC= key_stack[i];
+            KeyClass kcD= desired_key_list[i];
+            if (kcD.index_key != kcC.index_key) return false;
+            if (kcD.index_key) {
+                if (!(kcD.any_key || kcD.key == kcC.key)) {
+                    return false;
+                } 
+            }
+            else {
+                if (!(kcD.any_index || kcD.index == kcC.index)) {
+                    return false;
+                }
+            }
+        }
+    }
+    else return false;
+    return true;
+}
 void getProcessedKey(string type) {
     if (key_stack.size()){
         KeyClass keyClass = key_stack[key_stack.size()-1];
@@ -238,8 +269,61 @@ void handleEvent(const JsonStreamEvent<string>& event) {
         else if(key_found == 2 && prev_key_found != 2) {
             remove_last_delimeter();
             json_stream_parser.stop_emitting_event = true;
-            std::cout << "Got value of desired key: " << desired_key<<endl<<traversedJson<<endl;
+            std::cout << "Got value of desired key: "<<endl<<traversedJson<<endl;
         }
+    }
+}
+
+void addKey(bool list_index, string val) {
+    if (list_index) {
+        KeyClass keyClass(val=="*" ? -2 : stoi(val));
+        desired_key_list.push_back(keyClass);
+    }
+    else {
+
+        KeyClass keyClass(val,true);
+        desired_key_list.push_back(keyClass);
+    }
+
+}
+void splitDesiredKey() {
+    string curr = "";
+    bool list_index= false;
+    int last_list_end=-1;
+    int last_dot_index=-1;
+    
+    for (int i=0;i<desired_key.size();i++) {
+        if (desired_key[i] == '.') {
+            if(i-1!=last_list_end)
+            {
+                addKey(list_index, curr);
+                last_dot_index = i;
+            }
+            curr = "";
+        }
+        else if (desired_key[i] == '[')
+        {
+            if(i-1!=last_dot_index) addKey(list_index, curr);
+            list_index = true;
+            curr = "";
+        }
+        
+        else if (desired_key[i] == ']')
+        {
+            addKey(list_index, curr);
+            list_index = false;
+            curr = "";
+            last_list_end = i;
+        }
+        else {
+            curr.push_back(desired_key[i]);
+        } 
+    }
+    if (curr.length()) {
+        addKey(list_index, curr);
+    }
+    for (int i=0;i<desired_key_list.size();i++) {
+        cout<<desired_key_list[i].index<<" "<<desired_key_list[i].index_key<<" "<<desired_key_list[i].key<<" "<<desired_key_list[i].any_index<<" "<<desired_key_list[i].any_key<<endl;
     }
 }
 
@@ -249,6 +333,9 @@ int main(int argc, char** argv) {
     string _desired_key(argv[2]);
     desired_key= _desired_key;
     string fileName = "tests/Json files/"+_fileName;
+    KeyClass keyClass("$",true);
+    key_stack.push_back(keyClass);
+    splitDesiredKey();
     // code-test.json large-file.json
     // subscribe to the events those are needed for your purpose
     // Subscribing to all events is not necessary. 
