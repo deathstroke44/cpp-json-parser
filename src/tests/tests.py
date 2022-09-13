@@ -77,6 +77,14 @@ tests = [
     {
         'fileName': 'Sample-employee-JSON-data.json',
         'query': '$.Employees[*]..jobTitle'
+    },
+    {
+        'fileName': 'store.json',
+        'query': '$.store.book[*].author'
+    },
+    {
+        'fileName': 'store.json',
+        'query': '$.store.*'
     }
 ]
 os.system('clear')

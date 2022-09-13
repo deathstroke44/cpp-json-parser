@@ -17,7 +17,7 @@ class KeyClass {
     this->key = key;
     index_key = true;
     this->index = 0;
-    any_key = (key.length() == 0);
+    any_key = (key.length() == 0 || key=="*");
   };
 };
 vector<KeyClass> key_stack;
