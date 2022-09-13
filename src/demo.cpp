@@ -23,7 +23,6 @@ class KeyClass {
 vector<KeyClass> key_stack;
 vector<int> list_index_stack;
 vector<string> part_of_stack;
-string current_key = "$.";
 string desired_key = "skills";
 JsonStreamEvent<string> current_event;
 map<string, string> traversedJsonMap;
@@ -42,8 +41,7 @@ string getDummyKey() {
   return str;
 }
 string getKeyValue(string key) {
-  string x = traversedJsonMap[key];
-  return x;
+  return traversedJsonMap[key];
 }
 void putKeyValue(string key, string value) { traversedJsonMap[key] = value; }
 void remove_delimeter_not_exists(const StreamToken streamToken,
@@ -96,7 +94,6 @@ void addEventInDesiredResult(const StreamToken streamToken, string currentKey) {
   putKeyValue(currentKey, traversedJson);
 }
 bool current_key_part_of_desired_key() {
-  // return current_key.rfind(desired_key,0) == 0;
   if (desired_key_list.size() <= key_stack.size()) {
     for (int i = 0; i < desired_key_list.size(); i++) {
       KeyClass kcC = key_stack[i];
@@ -121,28 +118,12 @@ void getProcessedKey(string type) {
     KeyClass keyClass = key_stack[key_stack.size() - 1];
     if (keyClass.index_key) {
       if (type == "expand") {
-        if (key_stack.size() > 1) {
-          current_key = current_key + '.';
-        }
-        current_key = current_key + keyClass.key;
       } else if (type == "deflate") {
-        int last_key_length = keyClass.key.size();
-        if (key_stack.size() > 1) {
-          last_key_length++;
-        }
-        current_key =
-            current_key.substr(0, current_key.size() - last_key_length);
         key_stack.pop_back();
       }
     } else {
       if (type == "expand") {
-        string new_key = "[" + to_string(keyClass.index) + "]";
-        current_key = current_key + new_key;
       } else if (type == "deflate") {
-        string new_key = "[" + to_string(keyClass.index) + "]";
-        int last_key_length = new_key.size();
-        current_key =
-            current_key.substr(0, current_key.size() - last_key_length);
         key_stack.pop_back();
       }
     }
@@ -218,8 +199,6 @@ bool multiResultExist = false;
 
 void handleEvent(const JsonStreamEvent<string>& event) {
   current_event = event;
-  // handle event as your need. I have just added this code for testing and demo
-  // purpose.
   StreamToken streamToken = event.getStreamToken();
   bool ignoreEventFlag = false;
   bool shouldAddThisEvent = false;
@@ -276,12 +255,8 @@ void handleEvent(const JsonStreamEvent<string>& event) {
         string traversedJson = getKeyValue(previousKey);
         int cnt = 0;
         for (int i = 0; i < traversedJson.size(); i++) {
-          if (traversedJson[i] == ']') {
-            cnt++;
-          }
-          if (traversedJson[i] == '[') {
-            cnt--;
-          }
+          if (traversedJson[i] == ']') cnt++;
+          if (traversedJson[i] == '[') cnt--;
         }
         if (cnt == 1) {
           traversedJson.pop_back();
@@ -298,9 +273,7 @@ void handleEvent(const JsonStreamEvent<string>& event) {
       string value = it.second;
       value = remove_last_delimeter(key);
       json_stream_parser.stop_emitting_event = true;
-      if (finalResult.length()) {
-        finalResult.push_back(',');
-      }
+      if (finalResult.length()) finalResult.push_back(',');
       finalResult.append(value);
     }
     if (multiResultExist) {
@@ -367,11 +340,6 @@ int main(int argc, char** argv) {
   KeyClass keyClass("$", true);
   key_stack.push_back(keyClass);
   splitDesiredKey();
-  // code-test.json large-file.json
-  // subscribe to the events those are needed for your purpose
-  // Subscribing to all events is not necessary.
-  // There is no constraint that you have to use same fuction for all events
-  { json_stream_parser.setEventHandler(handleEvent); }
-
+  json_stream_parser.setEventHandler(handleEvent);
   json_stream_parser.start_json_streaming(fileName);
 }
