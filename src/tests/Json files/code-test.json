@@ -1,7 +1,7 @@
 {
     "name" : "বাংলা",
     "skills": {
-        "lang": [{"C":["C++","cpp"]},"Java","Python"],
+        "lang": [{"C":["C++","cpp"]},["Java"],"Python"],
         "true-test": true,
         "false-test": false,
         "male": 12,

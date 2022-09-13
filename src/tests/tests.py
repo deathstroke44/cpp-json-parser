@@ -20,6 +20,10 @@ tests = [
     },
     {
         'fileName': 'code-test.json',
+        'query': '$.skills.lang[2]'
+    },
+    {
+        'fileName': 'code-test.json',
         'query': '$.skills.lang[0].C'
     },
     {
@@ -56,11 +60,19 @@ tests = [
     },
     {
         'fileName': 'Sample-employee-JSON-data.json',
+        'query': '$.Employees[*]'
+    },
+    {
+        'fileName': 'Sample-employee-JSON-data.json',
         'query': '$.Employees[0].jobTitle'
     },
     {
         'fileName': 'Sample-employee-JSON-data.json',
         'query': '$.Employees[*].jobTitle'
+    },
+    {
+        'fileName': 'Sample-employee-JSON-data.json',
+        'query': '$..[*].jobTitle'
     },
     {
         'fileName': 'Sample-employee-JSON-data.json',
@@ -73,7 +85,3 @@ for test in tests:
     print('Test Case: file name:',test['fileName'], 'query:',test['query'])
     sys_call= './a.out '+ test['fileName']+' '+ test['query']
     os.system(sys_call)
-# test = tests[0]
-# print('Test Case: file name:',test['fileName'], 'query:',test['query'])
-# sys_call= './a.out '+ test['fileName']+' '+ test['query']
-# os.system(sys_call)
