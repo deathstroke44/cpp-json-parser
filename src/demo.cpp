@@ -21,7 +21,6 @@ class KeyClass {
   };
 };
 vector<KeyClass> key_stack;
-vector<int> list_index_stack;
 vector<string> part_of_stack;
 JsonStreamEvent<string> current_event;
 map<string, string> jsonPathQueryResultsMap;
@@ -42,9 +41,9 @@ string getCurrentJsonPathQueryKey() {
 string getKeyValue(string key) {
   return jsonPathQueryResultsMap[key];
 }
+bool isLastKeyInKeyStackIsIndex() { return key_stack.size() && !key_stack[key_stack.size()-1].is_string_key;}
 void putKeyValue(string key, string value) { jsonPathQueryResultsMap[key] = value; }
-void remove_delimeter_not_exists(const StreamToken streamToken,
-                                 string currentKey) {
+void removeDelimeterIfNeeded(const StreamToken streamToken, string currentKey) {
   string traversedJson = getKeyValue(currentKey);
   bool flag = streamToken.token_type == JsonEventType::OBJECT_LIST_EVENT &&
               ((streamToken.value == "list ended") ||
@@ -55,7 +54,7 @@ void remove_delimeter_not_exists(const StreamToken streamToken,
   }
   putKeyValue(currentKey, traversedJson);
 }
-string remove_last_delimeter(string key) {
+string removeLastDelimeterIfNeeded(string key) {
   string traversedJson = getKeyValue(key);
   if (traversedJson.size() > 0 &&
       traversedJson[traversedJson.size() - 1] == ',') {
@@ -65,7 +64,7 @@ string remove_last_delimeter(string key) {
   return traversedJson;
 }
 void addTokenInDesiredResult(const StreamToken streamToken, string currentKey) {
-  remove_delimeter_not_exists(streamToken, currentKey);
+  removeDelimeterIfNeeded(streamToken, currentKey);
   string traversedJson = getKeyValue(currentKey);
   if (streamToken.token_type == JsonEventType::KEY_EVENT) {
     traversedJson += "\"" + streamToken.value + "\"" + " : ";
@@ -119,9 +118,7 @@ void pop_key(bool need_to_added_ine_event = false) {
   }
 }
 void increment_index_key() {
-  if (key_stack.size() && !key_stack[key_stack.size() - 1].is_string_key) {
-    key_stack[key_stack.size() - 1].index++;
-  }
+  if (isLastKeyInKeyStackIsIndex()) key_stack[key_stack.size() - 1].index++;
 }
 
 void push_string_key(string key) {
@@ -138,11 +135,9 @@ string get_part_of_value() {
 }
 
 void set_new_list_started() {
-  if (get_part_of_value() == "list" && list_index_stack.size() > 0) {
-    list_index_stack[list_index_stack.size() - 1]++;
+  if (get_part_of_value() == "list" && isLastKeyInKeyStackIsIndex()) {
     increment_index_key();
   }
-  list_index_stack.push_back(-1);
   push_index_key(-1);
 }
 void pop_part_of_value() {
@@ -160,8 +155,7 @@ void set_last_object_ended() {
 
 void set_new_value_added_in_list() {
   if (get_part_of_value() == "list") {
-    if (list_index_stack.size() > 0) {
-      list_index_stack[list_index_stack.size() - 1]++;
+    if (isLastKeyInKeyStackIsIndex()) {
       increment_index_key();
     }
   }
@@ -200,8 +194,7 @@ void handleEvent(const JsonStreamEvent<string>& event) {
         set_part_of_value("list");
       } else if (streamToken.value == "list ended") {
         pop_part_of_value();
-        if (list_index_stack.size() > 0) {
-          list_index_stack.pop_back();
+        if (isLastKeyInKeyStackIsIndex()) {
           pop_key(true);
         }
         if (get_part_of_value() == "object") {
@@ -242,10 +235,10 @@ void handleEvent(const JsonStreamEvent<string>& event) {
   }
   string finalResult = "";
   if (streamToken.token_type == Document_END) {
-    for (auto it : jsonPathQueryResultsMap) {
-      string key = it.first;
-      string value = it.second;
-      value = remove_last_delimeter(key);
+    for (auto it = jsonPathQueryResultsMap.begin(); it!=jsonPathQueryResultsMap.end();it++) {
+      string key = it->first;
+      string value = it->second;
+      value = removeLastDelimeterIfNeeded(key);
       json_stream_parser.stop_emitting_event = true;
       if (finalResult.length()) finalResult.push_back(',');
       finalResult.append(value);
@@ -295,21 +288,17 @@ void processJsonPathQuery(string json_path_query) {
       curr.push_back(json_path_query[i]);
     }
   }
-  if (curr.length()) {
-    addKey(list_index, curr);
-  }
+  if (curr.length()) addKey(list_index, curr);
+  
   for (int i = 0; i < json_path_query_tokenized.size(); i++) {
-    if (json_path_query_tokenized[i].any_key || json_path_query_tokenized[i].any_index) {
-      multiResultExist = true;
-    }
+    multiResultExist = multiResultExist || (json_path_query_tokenized[i].any_key || json_path_query_tokenized[i].any_index);
   }
 }
 
 int main(int argc, char** argv) {
   json_stream_parser = Json_stream_parser();
   string _fileName(argv[1]);
-  string _desired_key(argv[2]);
-  string json_path_query = _desired_key;
+  string json_path_query(argv[2]);
   string fileName = "tests/Json files/" + _fileName;
   KeyClass keyClass("$", true);
   key_stack.push_back(keyClass);

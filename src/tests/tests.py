@@ -80,7 +80,7 @@ tests = [
     },
     {
         'fileName': 'Sample-employee-JSON-data.json',
-        'query': '$.Employees[*]..jobTitle'
+        'query': '$.Employees[*].*'
     },
     {
         'fileName': 'store.json',
