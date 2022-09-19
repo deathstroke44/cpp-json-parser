@@ -63,7 +63,7 @@ string removeLastDelimeterIfNeeded(string key) {
   }
   return traversedJson;
 }
-void addTokenInDesiredResult(const StreamToken streamToken, string currentKey) {
+void addTokenInDesiredResult(const StreamToken streamToken, string currentKey, bool listEndTagCheck=false) {
   removeDelimeterIfNeeded(streamToken, currentKey);
   string traversedJson = getKeyValue(currentKey);
   if (streamToken.token_type == JsonEventType::KEY_EVENT) {
@@ -80,8 +80,16 @@ void addTokenInDesiredResult(const StreamToken streamToken, string currentKey) {
     if (streamToken.value == "list started") {
       traversedJson.push_back('[');
     } else if (streamToken.value == "list ended") {
-      traversedJson.push_back(']');
-      traversedJson.push_back(',');
+      if (listEndTagCheck) {
+        if (key_stack.size()+1==json_path_query_tokenized.size() && json_path_query_tokenized[json_path_query_tokenized.size()-1].is_string_key) {
+          traversedJson.push_back(']');
+          traversedJson.push_back(',');
+        }
+      }
+      else {
+        traversedJson.push_back(']');
+        traversedJson.push_back(',');
+      }
     } else if (streamToken.value == "object started") {
       traversedJson.push_back('{');
     } else if (streamToken.value == "object ended") {
@@ -217,20 +225,7 @@ void handleEvent(const JsonStreamEvent<string>& event) {
       string currentKey = getCurrentJsonPathQueryKey();
       addTokenInDesiredResult(streamToken, currentKey + "");
     } else if (!fg && shouldAddThisEvent && currentlyValid) {
-      addTokenInDesiredResult(streamToken, previousKey);
-      if (check_balance_par) {
-        string traversedJson = getKeyValue(previousKey);
-        int cnt = 0;
-        for (int i = 0; i < traversedJson.size(); i++) {
-          if (traversedJson[i] == ']') cnt++;
-          if (traversedJson[i] == '[') cnt--;
-        }
-        if (cnt == 1) {
-          traversedJson.pop_back();
-          traversedJson.pop_back();
-          putKeyValue(previousKey, traversedJson);
-        }
-      }
+      addTokenInDesiredResult(streamToken, previousKey, check_balance_par);
     }
   }
   string finalResult = "";
@@ -244,12 +239,9 @@ void handleEvent(const JsonStreamEvent<string>& event) {
       finalResult.append(value);
     }
     if (multiResultExist) {
-      finalResult = "[" + finalResult;
-      finalResult.push_back(']');
+      finalResult = "[" + finalResult + "]";
     }
-
-    std::cout << "Got value of desired key final result: " << endl
-              << finalResult << endl;
+    std::cout << "Got value of desired key final result: " << endl<< finalResult << endl;
   }
 }
 
