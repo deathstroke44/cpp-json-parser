@@ -80,13 +80,7 @@ void addTokenInDesiredResult(const StreamToken streamToken, string currentKey, b
     if (streamToken.value == "list started") {
       traversedJson.push_back('[');
     } else if (streamToken.value == "list ended") {
-      if (listEndTagCheck) {
-        if (key_stack.size()+1==json_path_query_tokenized.size() && json_path_query_tokenized[json_path_query_tokenized.size()-1].is_string_key) {
-          traversedJson.push_back(']');
-          traversedJson.push_back(',');
-        }
-      }
-      else {
+      if (!listEndTagCheck || (key_stack.size()+1==json_path_query_tokenized.size() && json_path_query_tokenized[json_path_query_tokenized.size()-1].is_string_key)) {
         traversedJson.push_back(']');
         traversedJson.push_back(',');
       }
@@ -179,7 +173,7 @@ void handleEvent(const JsonStreamEvent<string>& event) {
   bool ignoreEventFlag = false;
   bool shouldAddThisEvent = false;
   bool currentlyValid = current_key_part_of_desired_key();
-  bool check_balance_par = false;
+  bool should_check_list_end_symbol_append = false;
   string previousKey = getCurrentJsonPathQueryKey();
   {
     if (streamToken.token_type == JsonEventType::KEY_EVENT) {
@@ -209,7 +203,7 @@ void handleEvent(const JsonStreamEvent<string>& event) {
           pop_key(true);
         }
         shouldAddThisEvent = true;
-        check_balance_par = true;
+        should_check_list_end_symbol_append = true;
       } else if (streamToken.value == "object started") {
         if (get_part_of_value() == "list") {
           set_new_value_added_in_list();
@@ -225,7 +219,7 @@ void handleEvent(const JsonStreamEvent<string>& event) {
       string currentKey = getCurrentJsonPathQueryKey();
       addTokenInDesiredResult(streamToken, currentKey + "");
     } else if (!fg && shouldAddThisEvent && currentlyValid) {
-      addTokenInDesiredResult(streamToken, previousKey, check_balance_par);
+      addTokenInDesiredResult(streamToken, previousKey, should_check_list_end_symbol_append);
     }
   }
   string finalResult = "";
