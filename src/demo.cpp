@@ -24,7 +24,7 @@ vector<KeyClass> key_stack;
 vector<int> list_index_stack;
 vector<string> part_of_stack;
 JsonStreamEvent<string> current_event;
-map<string, string> traversedJsonMap;
+map<string, string> jsonPathQueryResultsMap;
 Json_stream_parser json_stream_parser;
 vector<KeyClass> json_path_query_tokenized;
 string getCurrentJsonPathQueryKey() {
@@ -40,9 +40,9 @@ string getCurrentJsonPathQueryKey() {
   return str;
 }
 string getKeyValue(string key) {
-  return traversedJsonMap[key];
+  return jsonPathQueryResultsMap[key];
 }
-void putKeyValue(string key, string value) { traversedJsonMap[key] = value; }
+void putKeyValue(string key, string value) { jsonPathQueryResultsMap[key] = value; }
 void remove_delimeter_not_exists(const StreamToken streamToken,
                                  string currentKey) {
   string traversedJson = getKeyValue(currentKey);
@@ -112,22 +112,7 @@ bool current_key_part_of_desired_key() {
     return false;
   return true;
 }
-void getProcessedKey(string type) {
-  if (key_stack.size()) {
-    KeyClass keyClass = key_stack[key_stack.size() - 1];
-    if (keyClass.is_string_key) {
-      if (type == "expand") {
-      } else if (type == "deflate") {
-        key_stack.pop_back();
-      }
-    } else {
-      if (type == "expand") {
-      } else if (type == "deflate") {
-        key_stack.pop_back();
-      }
-    }
-  }
-}
+
 void pop_key(bool need_to_added_ine_event = false) {
   if (key_stack.size()) {
     key_stack.pop_back();
@@ -136,7 +121,7 @@ void pop_key(bool need_to_added_ine_event = false) {
 void increment_index_key() {
   if (key_stack.size() && !key_stack[key_stack.size() - 1].is_string_key) {
     KeyClass keyClass = key_stack[key_stack.size() - 1];
-    getProcessedKey("deflate");
+    pop_key();
     keyClass.index++;
     key_stack.push_back(keyClass);
   }
@@ -266,7 +251,7 @@ void handleEvent(const JsonStreamEvent<string>& event) {
   }
   string finalResult = "";
   if (streamToken.token_type == Document_END) {
-    for (auto it : traversedJsonMap) {
+    for (auto it : jsonPathQueryResultsMap) {
       string key = it.first;
       string value = it.second;
       value = remove_last_delimeter(key);
@@ -307,7 +292,7 @@ void processJsonPathQuery(string json_path_query) {
       }
       curr = "";
     } else if (json_path_query[i] == '[') {
-      if (i - 1 != last_dot_index) addKey(list_index, curr);
+      if (i - 1 != last_dot_index && i - 1 != last_list_end) addKey(list_index, curr);
       list_index = true;
       curr = "";
     } else if (json_path_query[i] == ']') {
