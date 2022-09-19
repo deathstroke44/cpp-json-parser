@@ -120,10 +120,7 @@ void pop_key(bool need_to_added_ine_event = false) {
 }
 void increment_index_key() {
   if (key_stack.size() && !key_stack[key_stack.size() - 1].is_string_key) {
-    KeyClass keyClass = key_stack[key_stack.size() - 1];
-    pop_key();
-    keyClass.index++;
-    key_stack.push_back(keyClass);
+    key_stack[key_stack.size() - 1].index++;
   }
 }
 
@@ -141,18 +138,12 @@ string get_part_of_value() {
 }
 
 void set_new_list_started() {
-  if (get_part_of_value() == "list") {
-    if (list_index_stack.size() > 0) {
-      list_index_stack[list_index_stack.size() - 1]++;
-      increment_index_key();
-    }
-    list_index_stack.push_back(-1);
-    push_index_key(-1);
-
-  } else {
-    list_index_stack.push_back(-1);
-    push_index_key(-1);
+  if (get_part_of_value() == "list" && list_index_stack.size() > 0) {
+    list_index_stack[list_index_stack.size() - 1]++;
+    increment_index_key();
   }
+  list_index_stack.push_back(-1);
+  push_index_key(-1);
 }
 void pop_part_of_value() {
   if (part_of_stack.size() > 0) {
