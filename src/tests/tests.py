@@ -20,6 +20,10 @@ tests = [
     },
     {
         'fileName': 'code-test.json',
+        'query': '$.skills.lang[1][0]'
+    },
+    {
+        'fileName': 'code-test.json',
         'query': '$.skills.lang[2]'
     },
     {
