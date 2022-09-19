@@ -71,7 +71,7 @@ enum FState{
     UNICODE_3_STATE,
     UNICODE_4_STATE
 };
-class Json_stream_parser {
+class JsonStreamParser {
 
 
 vector<string> tokens;
@@ -630,7 +630,7 @@ Dispatcher<JsonEventType> getEventDispatcher() {
     return eventDispatcher;
 }
 
-void start_json_streaming(string fileName) {
+void startJsonStreaming(string fileName) {
     tokens.clear();
     is_completed = false;
     char_code = 0;

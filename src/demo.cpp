@@ -1,50 +1,41 @@
-// code beautified using https://codebeautify.org/cpp-formatter-beautifier and https://formatter.org/cpp-formatter
 #include "library/code.hh"
 using namespace std;
 class KeyClass {
  public:
-  bool is_string_key = false;
+  bool isStringKey = false, anyIndex = false, anyKey = false;
   int index;
-  bool any_index = false;
-  bool any_key = false;
   string key;
   KeyClass() = default;
   KeyClass(int index) {
     this->index = index;
-    any_index = (index == -2);
+    anyIndex = (index == -2);
   };
   KeyClass(string key, bool dummy) {
     this->key = key;
-    is_string_key = true;
-    this->index = 0;
-    any_key = (key.length() == 0 || key=="*");
+    isStringKey = true;
+    anyKey = (key.length() == 0 || key=="*");
   };
 };
-vector<KeyClass> key_stack;
+vector<KeyClass> CurrentPathKeys;
 vector<string> currentlyInListOrObjectStack;
 JsonStreamEvent<string> current_event;
 map<string, string> jsonPathQueryResultsMap;
-Json_stream_parser json_stream_parser;
 vector<KeyClass> jsonPathQueryTokenized;
 bool multiResultExist = false;
 string getCurrentJsonPathQueryKey() {
   string str = "";
-  for (int i = 0; i < jsonPathQueryTokenized.size() && i < key_stack.size(); i++) {
-    KeyClass kc = key_stack[i];
-    if (!kc.is_string_key) {
-      str = str + "." + "[" + to_string(kc.index) + "]";
-    } else {
-      str = str + "." + kc.key;
-    }
+  for (int i = 0; i < jsonPathQueryTokenized.size() && i < CurrentPathKeys.size(); i++) {
+    KeyClass kc = CurrentPathKeys[i];
+    str = (!kc.isStringKey) ? str + "." + "[" + to_string(kc.index) + "]" : str = str + "." + kc.key;
   }
   return str;
 }
 string getKeyValue(string key) { return jsonPathQueryResultsMap[key];}
-bool isLastKeyInKeyStackIsIndex() { return key_stack.size() && !key_stack[key_stack.size()-1].is_string_key;}
+bool isLastKeyInKeyStackIsIndex() { return CurrentPathKeys.size() && !CurrentPathKeys[CurrentPathKeys.size()-1].isStringKey;}
 void putKeyValue(string key, string value) { jsonPathQueryResultsMap[key] = value; }
 void removeDelimeterIfNeeded(const StreamToken streamToken, string currentKey) {
   string traversedJson = getKeyValue(currentKey);
-  bool flag = streamToken.token_type == JsonEventType::OBJECT_LIST_EVENT &&
+  bool flag = streamToken.tokenType == JsonEventType::OBJECT_LIST_EVENT &&
               ((streamToken.value == "list ended") ||
                (streamToken.value == "object ended"));
   if (flag && traversedJson.size() > 0 && traversedJson[traversedJson.size() - 1] == ',') {
@@ -63,21 +54,21 @@ string removeLastDelimeterIfNeeded(string key) {
 void addTokenInDesiredResult(const StreamToken streamToken, string currentKey, bool listEndTagCheck=false) {
   removeDelimeterIfNeeded(streamToken, currentKey);
   string oneOfTheDesiredJsonFromSpecificPath = getKeyValue(currentKey);
-  if (streamToken.token_type == JsonEventType::KEY_EVENT) {
+  if (streamToken.tokenType == JsonEventType::KEY_EVENT) {
     oneOfTheDesiredJsonFromSpecificPath += "\"" + streamToken.value + "\"" + " : ";
   }
-  if (streamToken.token_type == VALUE_EVENT) {
+  if (streamToken.tokenType == VALUE_EVENT) {
     if (streamToken.token_sub_type == JsonEventType::STRING_EVENT) {
       oneOfTheDesiredJsonFromSpecificPath += "\"" + streamToken.value + "\",";
     } else {
       oneOfTheDesiredJsonFromSpecificPath += streamToken.value + ",";
     }
   }
-  if (streamToken.token_type == JsonEventType::OBJECT_LIST_EVENT) {
+  if (streamToken.tokenType == JsonEventType::OBJECT_LIST_EVENT) {
     if (streamToken.value == "list started") {
       oneOfTheDesiredJsonFromSpecificPath.push_back('[');
     } else if (streamToken.value == "list ended") {
-      if (!listEndTagCheck || (key_stack.size()+1==jsonPathQueryTokenized.size() && jsonPathQueryTokenized[jsonPathQueryTokenized.size()-1].is_string_key)) {
+      if (!listEndTagCheck || (CurrentPathKeys.size()+1==jsonPathQueryTokenized.size() && jsonPathQueryTokenized[jsonPathQueryTokenized.size()-1].isStringKey)) {
         oneOfTheDesiredJsonFromSpecificPath.push_back(']');
         oneOfTheDesiredJsonFromSpecificPath.push_back(',');
       }
@@ -91,15 +82,15 @@ void addTokenInDesiredResult(const StreamToken streamToken, string currentKey, b
   putKeyValue(currentKey, oneOfTheDesiredJsonFromSpecificPath);
 }
 bool currentKeyPartOfDesiredKey() {
-  if (jsonPathQueryTokenized.size() <= key_stack.size()) {
+  if (jsonPathQueryTokenized.size() <= CurrentPathKeys.size()) {
     for (int i = 0; i < jsonPathQueryTokenized.size(); i++) {
-      KeyClass kcC = key_stack[i];
+      KeyClass kcC = CurrentPathKeys[i];
       KeyClass kcD = jsonPathQueryTokenized[i];
-      if (kcD.is_string_key != kcC.is_string_key) return false;
-      if (kcD.is_string_key) {
-        if (!(kcD.any_key || kcD.key == kcC.key)) { return false; }
+      if (kcD.isStringKey != kcC.isStringKey) return false;
+      if (kcD.isStringKey) {
+        if (!(kcD.anyKey || kcD.key == kcC.key)) { return false; }
       } else {
-        if (!((kcD.any_index && kcC.index != -1) || kcD.index == kcC.index)) { return false; }
+        if (!((kcD.anyIndex && kcC.index != -1) || kcD.index == kcC.index)) { return false; }
       }
     }
   } 
@@ -107,26 +98,23 @@ bool currentKeyPartOfDesiredKey() {
   return true;
 }
 
-void pop_key() {
-  if (key_stack.size()) {
-    key_stack.pop_back();
-  }
+void popKey() {
+  if (CurrentPathKeys.size()) CurrentPathKeys.pop_back();
 }
 void IncrementIndexKey() {
-  if (isLastKeyInKeyStackIsIndex()) key_stack[key_stack.size() - 1].index++;
+  if (isLastKeyInKeyStackIsIndex()) CurrentPathKeys[CurrentPathKeys.size() - 1].index++;
 }
 
-void push_string_key(string key) {
-  key_stack.push_back(KeyClass(key, true));
+void pushStringKey(string key) {
+  CurrentPathKeys.push_back(KeyClass(key, true));
 }
 
 void pushIndexKey(int index) {
-  key_stack.push_back(KeyClass(index));
+  CurrentPathKeys.push_back(KeyClass(index));
 }
 
 string getPartOfValue() {
-  if (currentlyInListOrObjectStack.size() == 0) return "";
-  return currentlyInListOrObjectStack[currentlyInListOrObjectStack.size() - 1];
+  return currentlyInListOrObjectStack.size()==0 ? "" : currentlyInListOrObjectStack[currentlyInListOrObjectStack.size() - 1];
 }
 
 void setNewListStarted() {
@@ -135,20 +123,20 @@ void setNewListStarted() {
   }
   pushIndexKey(-1);
 }
-void pop_part_of_value() {
+void popPartOfValue() {
   if (currentlyInListOrObjectStack.size() > 0) {
     currentlyInListOrObjectStack.pop_back();
   }
 }
 
-void set_last_object_ended() {
-  pop_part_of_value();
+void setLastObjectEnded() {
+  popPartOfValue();
   if (getPartOfValue() == "object") {
-    pop_key();
+    popKey();
   }
 }
 
-void set_new_value_added_in_list() {
+void setNewValueAddedInList() {
   if (getPartOfValue() == "list" && isLastKeyInKeyStackIsIndex()) {
     IncrementIndexKey();
   }
@@ -165,39 +153,39 @@ void handleEvent(const JsonStreamEvent<string>& event) {
   bool should_check_list_end_symbol_append = false;
   string previousKey = getCurrentJsonPathQueryKey();
   string finalResult = "";
-  if (streamToken.token_type == JsonEventType::KEY_EVENT) {
+  if (streamToken.tokenType == JsonEventType::KEY_EVENT) {
     ignoreEventFlag = ignoreEventFlag || !currentKeyPartOfDesiredKey();
-    push_string_key(streamToken.value);
+    pushStringKey(streamToken.value);
   }
-  if (streamToken.token_type == VALUE_EVENT) {
+  if (streamToken.tokenType == VALUE_EVENT) {
     if (getPartOfValue() == "object") {
-      pop_key();
+      popKey();
       shouldAddThisEvent = true;
     } else if (getPartOfValue() == "list") {
-      set_new_value_added_in_list();
+      setNewValueAddedInList();
     }
   }
-  if (streamToken.token_type == JsonEventType::OBJECT_LIST_EVENT) {
+  if (streamToken.tokenType == JsonEventType::OBJECT_LIST_EVENT) {
     if (streamToken.value == "list started") {
       setNewListStarted();
       setPartOfValue("list");
     } else if (streamToken.value == "list ended") {
-      pop_part_of_value();
+      popPartOfValue();
       if (isLastKeyInKeyStackIsIndex()) {
-        pop_key();
+        popKey();
       }
       if (getPartOfValue() == "object") {
-        pop_key();
+        popKey();
       }
       shouldAddThisEvent = true;
       should_check_list_end_symbol_append = true;
     } else if (streamToken.value == "object started") {
       if (getPartOfValue() == "list") {
-        set_new_value_added_in_list();
+        setNewValueAddedInList();
       }
       setPartOfValue("object");
     } else if (streamToken.value == "object ended") {
-      set_last_object_ended();
+      setLastObjectEnded();
       shouldAddThisEvent = true;
     }
   }
@@ -208,12 +196,11 @@ void handleEvent(const JsonStreamEvent<string>& event) {
   } else if (!fg && shouldAddThisEvent && currentlyValid) {
     addTokenInDesiredResult(streamToken, previousKey, should_check_list_end_symbol_append);
   }
-  if (streamToken.token_type == Document_END) {
+  if (streamToken.tokenType == Document_END) {
     for (auto it = jsonPathQueryResultsMap.begin(); it!=jsonPathQueryResultsMap.end();it++) {
       string key = it->first;
       string value = it->second;
       value = removeLastDelimeterIfNeeded(key);
-      json_stream_parser.stop_emitting_event = true;
       if (finalResult.length()) finalResult.push_back(',');
       finalResult.append(value);
     }
@@ -224,8 +211,8 @@ void handleEvent(const JsonStreamEvent<string>& event) {
   }
 }
 
-void addKey(bool list_index, string val) {
-  if (list_index) {
+void addKey(bool listIndex, string val) {
+  if (listIndex) {
     KeyClass keyClass(val == "*" ? -2 : stoi(val));
     jsonPathQueryTokenized.push_back(keyClass);
   } else {
@@ -233,46 +220,46 @@ void addKey(bool list_index, string val) {
     jsonPathQueryTokenized.push_back(keyClass);
   }
 }
-void processJsonPathQuery(string json_path_query) {
+void processJsonPathQuery(string jsonPathQuery) {
   string curr = "";
-  bool list_index = false;
-  int last_list_end = -1, last_dot_index = -1;
+  bool listIndex = false;
+  int lastListEnd = -1, lastDotIndex = -1;
 
-  for (int i = 0; i < json_path_query.size(); i++) {
-    if (json_path_query[i] == '.') {
-      if (i - 1 != last_list_end) {
-        addKey(list_index, curr);
-        last_dot_index = i;
+  for (int i = 0; i < jsonPathQuery.size(); i++) {
+    if (jsonPathQuery[i] == '.') {
+      if (i - 1 != lastListEnd) {
+        addKey(listIndex, curr);
+        lastDotIndex = i;
       }
       curr = "";
-    } else if (json_path_query[i] == '[') {
-      if (i - 1 != last_dot_index && i - 1 != last_list_end) addKey(list_index, curr);
-      list_index = true;
+    } else if (jsonPathQuery[i] == '[') {
+      if (i - 1 != lastDotIndex && i - 1 != lastListEnd) addKey(listIndex, curr);
+      listIndex = true;
       curr = "";
-    } else if (json_path_query[i] == ']') {
-      addKey(list_index, curr);
-      list_index = false;
+    } else if (jsonPathQuery[i] == ']') {
+      addKey(listIndex, curr);
+      listIndex = false;
       curr = "";
-      last_list_end = i;
+      lastListEnd = i;
     } else {
-      curr.push_back(json_path_query[i]);
+      curr.push_back(jsonPathQuery[i]);
     }
   }
-  if (curr.length()) addKey(list_index, curr);
+  if (curr.length()) addKey(listIndex, curr);
   
   for (int i = 0; i < jsonPathQueryTokenized.size(); i++) {
-    multiResultExist = multiResultExist || (jsonPathQueryTokenized[i].any_key || jsonPathQueryTokenized[i].any_index);
+    multiResultExist = multiResultExist || (jsonPathQueryTokenized[i].anyKey || jsonPathQueryTokenized[i].anyIndex);
   }
 }
 
 int main(int argc, char** argv) {
-  json_stream_parser = Json_stream_parser();
+  JsonStreamParser jsonStreamParser = JsonStreamParser();
   string fileName(argv[1]);
-  string json_path_query(argv[2]);
+  string jsonPathQuery(argv[2]);
   fileName = "tests/Json files/" + fileName;
   KeyClass keyClass("$", true);
-  key_stack.push_back(keyClass);
-  processJsonPathQuery(json_path_query);
-  json_stream_parser.setEventHandler(handleEvent);
-  json_stream_parser.start_json_streaming(fileName);
+  CurrentPathKeys.push_back(keyClass);
+  processJsonPathQuery(jsonPathQuery);
+  jsonStreamParser.setEventHandler(handleEvent);
+  jsonStreamParser.startJsonStreaming(fileName);
 }
