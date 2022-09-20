@@ -43,6 +43,34 @@ tests = [
         'query': '$.skills.nested1.nested3.key2'
     },
     {
+        'fileName': 'code-test.json',
+        'query': '$.skills.test_array'
+    },
+    {
+        'fileName': 'code-test.json',
+        'query': '$.skills.test_array[2]'
+    },
+    {
+        'fileName': 'code-test.json',
+        'query': '$.skills.test_array[2][2]'
+    },
+    {
+        'fileName': 'code-test.json',
+        'query': '$.skills.test_array[2][2][2]'
+    },
+    {
+        'fileName': 'code-test.json',
+        'query': '$.skills.test_array[2][2][2][0]'
+    },
+    {
+        'fileName': 'code-test.json',
+        'query': '$.skills.test_array[2][2][2][0][0]'
+    },
+    {
+        'fileName': 'code-test.json',
+        'query': '$.skills.test_array[2][2][2][0][1]'
+    },
+    {
         'fileName': 'large-file.json',
         'query': '$.[0]'
     },
@@ -94,6 +122,5 @@ tests = [
 os.system('clear')
 os.system('g++ demo.cpp')
 for test in tests:
-    print('Test Case: file name:',test['fileName'], 'query:',test['query'])
     sys_call= './a.out '+ test['fileName']+' '+ test['query']
     os.system(sys_call)
