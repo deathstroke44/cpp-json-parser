@@ -139,29 +139,29 @@ void emitEvent(int eventType, string value, bool listElement) {
     else if (eventType == 3) {
         // list started
         // cout<<"Json Stream Event: "<<"list started"<<endl;
-        _JsonSubEventType = JsonEventType::OBJECT_LIST_EVENT;
-        _JsonEventType = _JsonSubEventType;
+        _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _JsonSubEventType = LIST_STARTED;
         _value = "list started";
     }
     else if (eventType == 4) {
         // list ended
         // cout<<"Json Stream Event: "<<"list ended"<<endl;
-        _JsonSubEventType = JsonEventType::OBJECT_LIST_EVENT;
-        _JsonEventType = _JsonSubEventType;
+        _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _JsonSubEventType = LIST_ENDED;
         _value = "list ended";
     }
     else if (eventType == 6) {
         // object started
         // cout<<"Json Stream Event: "<<"object started"<<endl;
-        _JsonSubEventType = JsonEventType::OBJECT_LIST_EVENT;
-        _JsonEventType = _JsonSubEventType;
+        _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _JsonSubEventType = OBJECT_STARTED;
         _value = "object started";
     }
     else if (eventType == 7) {
         // object ended
         // cout<<"Json Stream Event: "<<"object ended"<<endl;
-        _JsonSubEventType = JsonEventType::OBJECT_LIST_EVENT;
-        _JsonEventType = _JsonSubEventType;
+        _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
+        _JsonSubEventType = OBJECT_ENDED;
         _value = "object ended";
     }
     else if (eventType == 8) {

@@ -24,6 +24,10 @@ enum JsonEventType {
     FLOAT_EVENT,
     EXPONENT_EVENT,
     OBJECT_LIST_EVENT,
+    OBJECT_STARTED,
+    OBJECT_ENDED,
+    LIST_STARTED,
+    LIST_ENDED,
     Document_END,
     VALUE_EVENT,
 };
@@ -32,8 +36,9 @@ class StreamToken {
   public:
     JsonEventType tokenType;
     JsonEventType token_sub_type;
+    bool isDefault = true;
     string value;
-    StreamToken(JsonEventType  _token_type, JsonEventType  _token_sub_type, string _value) : tokenType(_token_type), token_sub_type(_token_sub_type), value(_value) {};
+    StreamToken(JsonEventType  _token_type, JsonEventType  _token_sub_type, string _value) : tokenType(_token_type), token_sub_type(_token_sub_type), value(_value), isDefault(false) {};
     StreamToken() = default;
 
 };

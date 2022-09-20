@@ -20,9 +20,18 @@ public:
   };
 };
 vector<KeyClass> CurrentPathKeys;
+// Currently I am reading token that can be immediate part of a list/object. this stack maintain this information
+// When I got an list/object end token I pop stack
+// When I got an list/object start token I push list/object value in the stack 
+
 vector<string> currentlyInListOrObjectStack;
 JsonStreamEvent<string> current_event;
+// Example:
+// $.*.info for this query $.bookstore.info and $.superstore.info need to be added in result
+// for this case $.bookstore.info and $.superstore.info keys value will be stored in separate keys in this map
 map<string, string> jsonPathQueryResultsMap;
+map<string, StreamToken> jsonPathQueryResultLastAddedToken;
+// Processed tokenized version of json path query
 vector<KeyClass> jsonPathQueryTokenized;
 bool multiResultExist = false;
 string getCurrentJsonPathQueryKey()
@@ -38,32 +47,30 @@ string getCurrentJsonPathQueryKey()
 string getKeyValue(string key) { return jsonPathQueryResultsMap[key]; }
 bool isLastKeyInKeyStackIsIndex() { return CurrentPathKeys.size() && !CurrentPathKeys[CurrentPathKeys.size() - 1].isStringKey; }
 void putKeyValue(string key, string value) { jsonPathQueryResultsMap[key] = value; }
-void removeDelimeterIfNeeded(const StreamToken streamToken, string currentKey)
-{
-  string traversedJson = getKeyValue(currentKey);
-  bool flag = streamToken.tokenType == JsonEventType::OBJECT_LIST_EVENT &&
-              ((streamToken.value == "list ended") ||
-               (streamToken.value == "object ended"));
-  if (flag && traversedJson.size() > 0 && traversedJson[traversedJson.size() - 1] == ',')
-  {
-    traversedJson.pop_back();
+bool addingDelimeterNeeded(const StreamToken streamToken, string currentKey) {
+  StreamToken lastAddedStreamToken = jsonPathQueryResultLastAddedToken[currentKey];
+  if (lastAddedStreamToken.isDefault) return false;
+  if (streamToken.token_sub_type == LIST_ENDED || streamToken.token_sub_type == OBJECT_ENDED) {
+    return false;
   }
-  putKeyValue(currentKey, traversedJson);
-}
-string removeLastDelimeterIfNeeded(string key)
-{
-  string traversedJson = getKeyValue(key);
-  if (traversedJson.size() > 0 && traversedJson[traversedJson.size() - 1] == ',')
-  {
-    traversedJson.pop_back();
-    putKeyValue(key, traversedJson);
+  if (streamToken.tokenType==VALUE_EVENT || streamToken.token_sub_type == LIST_STARTED || streamToken.token_sub_type == OBJECT_STARTED) {
+    return lastAddedStreamToken.tokenType==VALUE_EVENT || lastAddedStreamToken.token_sub_type==OBJECT_ENDED || lastAddedStreamToken.token_sub_type==LIST_ENDED;
   }
-  return traversedJson;
+  if (streamToken.tokenType==KEY_EVENT) {
+    return lastAddedStreamToken.token_sub_type!=OBJECT_STARTED;
+  }
+  return false;
+  
 }
-void addTokenInDesiredResult(const StreamToken streamToken, string currentKey, bool listEndTagCheck = false)
-{
-  removeDelimeterIfNeeded(streamToken, currentKey);
+void addTokenInResult(const StreamToken streamToken, string currentKey, bool listEndTagCheck = false)
+{  
+  bool shouldAppendDelimeter = addingDelimeterNeeded(streamToken, currentKey);
   string oneOfTheDesiredJsonFromSpecificPath = getKeyValue(currentKey);
+  if (shouldAppendDelimeter) {
+    oneOfTheDesiredJsonFromSpecificPath.push_back(',');
+  }
+  jsonPathQueryResultLastAddedToken[currentKey]=streamToken;
+
   if (streamToken.tokenType == JsonEventType::KEY_EVENT)
   {
     oneOfTheDesiredJsonFromSpecificPath += "\"" + streamToken.value + "\"" + " : ";
@@ -72,11 +79,11 @@ void addTokenInDesiredResult(const StreamToken streamToken, string currentKey, b
   {
     if (streamToken.token_sub_type == JsonEventType::STRING_EVENT)
     {
-      oneOfTheDesiredJsonFromSpecificPath += "\"" + streamToken.value + "\",";
+      oneOfTheDesiredJsonFromSpecificPath += "\"" + streamToken.value + "\"";
     }
     else
     {
-      oneOfTheDesiredJsonFromSpecificPath += streamToken.value + ",";
+      oneOfTheDesiredJsonFromSpecificPath += streamToken.value;
     }
   }
   if (streamToken.tokenType == JsonEventType::OBJECT_LIST_EVENT)
@@ -88,7 +95,6 @@ void addTokenInDesiredResult(const StreamToken streamToken, string currentKey, b
     else if (streamToken.value == "list ended" && (!listEndTagCheck || (CurrentPathKeys.size() + 1 == jsonPathQueryTokenized.size() && jsonPathQueryTokenized[jsonPathQueryTokenized.size() - 1].isStringKey)))
     {
       oneOfTheDesiredJsonFromSpecificPath.push_back(']');
-      oneOfTheDesiredJsonFromSpecificPath.push_back(',');
     }
     else if (streamToken.value == "object started")
     {
@@ -97,7 +103,6 @@ void addTokenInDesiredResult(const StreamToken streamToken, string currentKey, b
     else if (streamToken.value == "object ended")
     {
       oneOfTheDesiredJsonFromSpecificPath.push_back('}');
-      oneOfTheDesiredJsonFromSpecificPath.push_back(',');
     }
   }
   putKeyValue(currentKey, oneOfTheDesiredJsonFromSpecificPath);
@@ -206,12 +211,13 @@ void handleEvent(const JsonStreamEvent<string> &event)
   bool should_check_list_end_symbol_append = false;
   string previousKey = getCurrentJsonPathQueryKey();
   string finalResult = "";
+
   if (streamToken.tokenType == JsonEventType::KEY_EVENT)
   {
     ignoreEventFlag = ignoreEventFlag || !currentKeyPartOfDesiredKey();
     pushStringKey(streamToken.value);
   }
-  if (streamToken.tokenType == VALUE_EVENT)
+  else if (streamToken.tokenType == VALUE_EVENT)
   {
     if (getPartOfValue() == "object")
     {
@@ -223,50 +229,48 @@ void handleEvent(const JsonStreamEvent<string> &event)
       setNewValueAddedInList();
     }
   }
-  if (streamToken.tokenType == JsonEventType::OBJECT_LIST_EVENT)
+  else if (streamToken.token_sub_type == LIST_STARTED)
   {
-    if (streamToken.value == "list started")
-    {
-      setNewListStarted();
-      setPartOfValue("list");
-    }
-    else if (streamToken.value == "list ended")
-    {
-      popPartOfValue();
-      if (isLastKeyInKeyStackIsIndex())
-      {
-        popKey();
-      }
-      if (getPartOfValue() == "object")
-      {
-        popKey();
-      }
-      shouldAddThisEvent = true;
-      should_check_list_end_symbol_append = true;
-    }
-    else if (streamToken.value == "object started")
-    {
-      if (getPartOfValue() == "list")
-      {
-        setNewValueAddedInList();
-      }
-      setPartOfValue("object");
-    }
-    else if (streamToken.value == "object ended")
-    {
-      setLastObjectEnded();
-      shouldAddThisEvent = true;
-    }
+    setNewListStarted();
+    setPartOfValue("list");
   }
+  else if (streamToken.token_sub_type == LIST_ENDED)
+  {
+    popPartOfValue();
+    if (isLastKeyInKeyStackIsIndex())
+    {
+      popKey();
+    }
+    if (getPartOfValue() == "object")
+    {
+      popKey();
+    }
+    shouldAddThisEvent = true;
+    should_check_list_end_symbol_append = true;
+  }
+  else if (streamToken.token_sub_type == OBJECT_STARTED)
+  {
+    if (getPartOfValue() == "list")
+    {
+      setNewValueAddedInList();
+    }
+    setPartOfValue("object");
+  }
+  else if (streamToken.token_sub_type == OBJECT_ENDED)
+  {
+    setLastObjectEnded();
+    shouldAddThisEvent = true;
+  }
+  
   bool fg = currentKeyPartOfDesiredKey();
   if (fg && !ignoreEventFlag)
   {
     string currentKey = getCurrentJsonPathQueryKey();
-    addTokenInDesiredResult(streamToken, currentKey + "");
+    addTokenInResult(streamToken, currentKey + "");
   }
   else if (!fg && shouldAddThisEvent && currentlyValid)
   {
-    addTokenInDesiredResult(streamToken, previousKey, should_check_list_end_symbol_append);
+    addTokenInResult(streamToken, previousKey, should_check_list_end_symbol_append);
   }
   if (streamToken.tokenType == Document_END)
   {
@@ -274,9 +278,7 @@ void handleEvent(const JsonStreamEvent<string> &event)
     {
       string key = it->first;
       string value = it->second;
-      value = removeLastDelimeterIfNeeded(key);
-      if (finalResult.length())
-        finalResult.push_back(',');
+      if (finalResult.length()) finalResult.push_back(',');
       finalResult.append(value);
     }
     if (multiResultExist)
