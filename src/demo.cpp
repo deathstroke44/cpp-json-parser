@@ -67,11 +67,9 @@ void addTokenInDesiredResult(const StreamToken streamToken, string currentKey, b
   if (streamToken.tokenType == JsonEventType::OBJECT_LIST_EVENT) {
     if (streamToken.value == "list started") {
       oneOfTheDesiredJsonFromSpecificPath.push_back('[');
-    } else if (streamToken.value == "list ended") {
-      if (!listEndTagCheck || (CurrentPathKeys.size()+1==jsonPathQueryTokenized.size() && jsonPathQueryTokenized[jsonPathQueryTokenized.size()-1].isStringKey)) {
-        oneOfTheDesiredJsonFromSpecificPath.push_back(']');
-        oneOfTheDesiredJsonFromSpecificPath.push_back(',');
-      }
+    } else if (streamToken.value == "list ended" && (!listEndTagCheck || (CurrentPathKeys.size()+1==jsonPathQueryTokenized.size() && jsonPathQueryTokenized[jsonPathQueryTokenized.size()-1].isStringKey))) {
+      oneOfTheDesiredJsonFromSpecificPath.push_back(']');
+      oneOfTheDesiredJsonFromSpecificPath.push_back(',');
     } else if (streamToken.value == "object started") {
       oneOfTheDesiredJsonFromSpecificPath.push_back('{');
     } else if (streamToken.value == "object ended") {
