@@ -35,10 +35,10 @@ enum JsonEventType {
 class StreamToken {
   public:
     JsonEventType tokenType;
-    JsonEventType token_sub_type;
+    JsonEventType tokenSubType;
     bool isDefault = true;
     string value;
-    StreamToken(JsonEventType  _token_type, JsonEventType  _token_sub_type, string _value) : tokenType(_token_type), token_sub_type(_token_sub_type), value(_value), isDefault(false) {};
+    StreamToken(JsonEventType  _token_type, JsonEventType  _token_sub_type, string _value) : tokenType(_token_type), tokenSubType(_token_sub_type), value(_value), isDefault(false) {};
     StreamToken() = default;
 
 };
@@ -54,20 +54,6 @@ class StreamToken {
 
   Unfortunately, I have no idea how to enforce the existence of this attribute.
 */
-template <typename T>
-class Event{
-protected:
-  T _type;
-  std::string _name;
-  bool _handled = false;
-public:
-  Event() = default;
-  Event(T type, const std::string& name = "") : _type(type), _name(name){};
-  inline const T type() const { return _type;};
-  inline const std::string& getName() const { return _name;};
-  virtual bool isHandled(){ return _handled;};
-private:
-};
 
 template <typename T>
 class JsonStreamEvent{

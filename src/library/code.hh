@@ -4,13 +4,6 @@
 using namespace std;
 typedef long long int li;
 
-class JsonEvent : public Event<JsonEventType>
-{
-public:
-    JsonEvent() : Event<JsonEventType>(JsonEventType::KEY_EVENT, "JsonEvent"){};
-    JsonEvent(JsonEventType jsonEventType, string value) : Event<JsonEventType>(jsonEventType, value){};
-    virtual ~JsonEvent() = default;
-};
 
 enum FState
 {
@@ -56,7 +49,7 @@ class JsonStreamParser
     pair<TokenType, string> latestToken = make_pair(NULL_TOKEN, "");
 
 public:
-    DispatcherV2<string> eventDispatcher = DispatcherV2<string>();
+    Dispatcher<string> eventDispatcher = Dispatcher<string>();
     bool stop_emitting_event = false;
     string topicName = "jsonStreamTopic";
 

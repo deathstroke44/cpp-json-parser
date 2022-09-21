@@ -50,20 +50,20 @@ string getCurrentJsonPathKey()
   return str;
 }
 
-bool isLastKeyInKeyStackIsIndex() { return currentTraversedPathKeysStack.size() && !currentTraversedPathKeysStack[currentTraversedPathKeysStack.size() - 1].isStringKey; }
+bool isLastKeyOfCurrentPathIsIndex() { return currentTraversedPathKeysStack.size() && !currentTraversedPathKeysStack[currentTraversedPathKeysStack.size() - 1].isStringKey; }
 
 bool isAppendingDelimeterNeeded(const StreamToken streamToken, string currentKey) 
 {
   StreamToken lastAddedStreamToken = jsonPathQueryResultsLastAddedTokenMap[currentKey];
   if (lastAddedStreamToken.isDefault) return false;
-  if (streamToken.token_sub_type == LIST_ENDED || streamToken.token_sub_type == OBJECT_ENDED) {
+  if (streamToken.tokenSubType == LIST_ENDED || streamToken.tokenSubType == OBJECT_ENDED) {
     return false;
   }
-  if (streamToken.tokenType==VALUE_EVENT || streamToken.token_sub_type == LIST_STARTED || streamToken.token_sub_type == OBJECT_STARTED) {
-    return lastAddedStreamToken.tokenType==VALUE_EVENT || lastAddedStreamToken.token_sub_type==OBJECT_ENDED || lastAddedStreamToken.token_sub_type==LIST_ENDED;
+  if (streamToken.tokenType==VALUE_EVENT || streamToken.tokenSubType == LIST_STARTED || streamToken.tokenSubType == OBJECT_STARTED) {
+    return lastAddedStreamToken.tokenType==VALUE_EVENT || lastAddedStreamToken.tokenSubType==OBJECT_ENDED || lastAddedStreamToken.tokenSubType==LIST_ENDED;
   }
   if (streamToken.tokenType==KEY_EVENT) {
-    return lastAddedStreamToken.token_sub_type!=OBJECT_STARTED;
+    return lastAddedStreamToken.tokenSubType!=OBJECT_STARTED;
   }
   return false;
   
@@ -81,21 +81,21 @@ void addTokenInCurrentJsonPathResult(const StreamToken streamToken, string curre
   }
   if (streamToken.tokenType == VALUE_EVENT)
   {
-    oneOfTheDesiredJsonFromSpecificPath.append(streamToken.token_sub_type == JsonEventType::STRING_EVENT? "\"" + streamToken.value + "\"": streamToken.value);
+    oneOfTheDesiredJsonFromSpecificPath.append(streamToken.tokenSubType == JsonEventType::STRING_EVENT? "\"" + streamToken.value + "\"": streamToken.value);
   }
-  if (streamToken.token_sub_type == LIST_STARTED)
+  if (streamToken.tokenSubType == LIST_STARTED)
   {
     oneOfTheDesiredJsonFromSpecificPath.push_back('[');
   }
-  if (streamToken.token_sub_type == LIST_ENDED && (!listEndTagCheck || (currentTraversedPathKeysStack.size() + 1 == jsonPathQueryTokenized.size() && jsonPathQueryTokenized[jsonPathQueryTokenized.size() - 1].isStringKey)))
+  if (streamToken.tokenSubType == LIST_ENDED && (!listEndTagCheck || (currentTraversedPathKeysStack.size() + 1 == jsonPathQueryTokenized.size() && jsonPathQueryTokenized[jsonPathQueryTokenized.size() - 1].isStringKey)))
   {
     oneOfTheDesiredJsonFromSpecificPath.push_back(']');
   }
-  if (streamToken.token_sub_type == OBJECT_STARTED)
+  if (streamToken.tokenSubType == OBJECT_STARTED)
   {
     oneOfTheDesiredJsonFromSpecificPath.push_back('{');
   }
-  if (streamToken.token_sub_type == OBJECT_ENDED)
+  if (streamToken.tokenSubType == OBJECT_ENDED)
   {
     oneOfTheDesiredJsonFromSpecificPath.push_back('}');
   }
@@ -128,7 +128,7 @@ void popCurrentlyTraversingInListOrObjectStack()
 
 void IncrementIndexInTraversedPathKeysStack()
 {
-  if (isLastKeyInKeyStackIsIndex()) currentTraversedPathKeysStack[currentTraversedPathKeysStack.size() - 1].index++;
+  if (isLastKeyOfCurrentPathIsIndex()) currentTraversedPathKeysStack[currentTraversedPathKeysStack.size() - 1].index++;
 }
 
 string getCurrentTokenIsPartOfObjectOrList()
@@ -138,13 +138,13 @@ string getCurrentTokenIsPartOfObjectOrList()
 
 void handleNewListStarted()
 {
-  if (getCurrentTokenIsPartOfObjectOrList() == "list" && isLastKeyInKeyStackIsIndex()) IncrementIndexInTraversedPathKeysStack();
+  if (getCurrentTokenIsPartOfObjectOrList() == "list" && isLastKeyOfCurrentPathIsIndex()) IncrementIndexInTraversedPathKeysStack();
   currentTraversedPathKeysStack.push_back(KeyClass(-1));
 }
 void handleListEnded()
 {
   popCurrentlyTraversingInListOrObjectStack();
-  if (isLastKeyInKeyStackIsIndex())  popKeyFromTraversedKeysStack();
+  if (isLastKeyOfCurrentPathIsIndex())  popKeyFromTraversedKeysStack();
   if (getCurrentTokenIsPartOfObjectOrList() == "object") popKeyFromTraversedKeysStack();
 }
 
@@ -157,12 +157,12 @@ void handleObjectEnded()
 
 void handleNewValueAddedInList()
 {
-  if (getCurrentTokenIsPartOfObjectOrList() == "list" && isLastKeyInKeyStackIsIndex()) IncrementIndexInTraversedPathKeysStack();
+  if (getCurrentTokenIsPartOfObjectOrList() == "list" && isLastKeyOfCurrentPathIsIndex()) IncrementIndexInTraversedPathKeysStack();
 }
 
 void setCurrentlyTraversingListOrObject(string value) { currentlyTraversingInListOrObjectStack.push_back(value); }
 
-void handleJsonStreamParserEvents(const JsonStreamEvent<string> &jsonStreamEvent)
+void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
 {
   currentEvent = jsonStreamEvent;
   StreamToken streamToken = jsonStreamEvent.getStreamToken();
@@ -190,22 +190,22 @@ void handleJsonStreamParserEvents(const JsonStreamEvent<string> &jsonStreamEvent
       handleNewValueAddedInList();
     }
   }
-  else if (streamToken.token_sub_type == LIST_STARTED)
+  else if (streamToken.tokenSubType == LIST_STARTED)
   {
     handleNewListStarted();
     setCurrentlyTraversingListOrObject("list");
   }
-  else if (streamToken.token_sub_type == LIST_ENDED)
+  else if (streamToken.tokenSubType == LIST_ENDED)
   {
     handleListEnded();
     shouldAddThisEvent = should_check_list_end_symbol_append = true;
   }
-  else if (streamToken.token_sub_type == OBJECT_STARTED)
+  else if (streamToken.tokenSubType == OBJECT_STARTED)
   {
     if (getCurrentTokenIsPartOfObjectOrList() == "list") handleNewValueAddedInList();
     setCurrentlyTraversingListOrObject("object");
   }
-  else if (streamToken.token_sub_type == OBJECT_ENDED)
+  else if (streamToken.tokenSubType == OBJECT_ENDED)
   {
     handleObjectEnded();
     shouldAddThisEvent = true;
@@ -302,6 +302,6 @@ int main(int argc, char **argv)
   KeyClass keyClass("$", true);
   currentTraversedPathKeysStack.push_back(keyClass);
   processJsonPathQuery(jsonPathQuery);
-  jsonStreamParser.setEventHandler(handleJsonStreamParserEvents);
+  jsonStreamParser.setEventHandler(handleJsonStreamParserEvent);
   jsonStreamParser.startJsonStreaming(fileName);
 }
