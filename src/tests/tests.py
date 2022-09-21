@@ -1,5 +1,8 @@
 import os
 os.chdir('..')
+file = open('output.txt','w')
+file.write("Output of Json path query script:\n\n")
+file.close()
 relative_path = 'tests/Json files/'
 tests = [
     {
