@@ -28,11 +28,10 @@ enum JsonEventType {
 class StreamToken {
   public:
     JsonEventType tokenType;
-    JsonEventType tokenSubType;
     bool isDefault = true;
     bool isStringValue = false;
     string value;
-    StreamToken(JsonEventType  _token_type, JsonEventType  _token_sub_type, string _value, bool _isStringValue = false) : tokenType(_token_type), tokenSubType(_token_sub_type), value(_value), isDefault(false), isStringValue(_isStringValue) {};
+    StreamToken(JsonEventType  _token_type, string _value, bool _isStringValue = false) : tokenType(_token_type), value(_value), isDefault(false), isStringValue(_isStringValue) {};
     StreamToken() = default;
 
 };

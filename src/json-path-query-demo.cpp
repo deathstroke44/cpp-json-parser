@@ -23,9 +23,9 @@ class KeyClass
 //------------------------------------------Stacks and Maps used for path query--------------------------------------------
 
 vector<KeyClass> currentTraversedPathKeysStack;
-// Currently I am reading token that can be immediate part of a list/object. this stack maintain this information
-// When I got an list/object end token I pop stack
-// When I got an list/object start token I push list/object value in the stack 
+// Currently, I am processing a value token that can be an immediate part of a list/object. this stack maintains this information
+// When I got a list/object end token I pop this stack
+// When I got a list/object start token I push list/object value in this stack 
 vector<string> currentlyTraversingInListOrObjectStack;
 // Example:
 // $.*.info for this query $.bookstore.info and $.superstore.info need to be added in result
@@ -51,7 +51,10 @@ string getCurrentJsonPathKey()
   return str;
 }
 
-bool isLastKeyOfCurrentPathIsIndex() { return currentTraversedPathKeysStack.size() && !currentTraversedPathKeysStack[currentTraversedPathKeysStack.size() - 1].isStringKey; }
+bool isLastKeyOfCurrentPathIsIndex() 
+{ 
+  return currentTraversedPathKeysStack.size() && !currentTraversedPathKeysStack[currentTraversedPathKeysStack.size() - 1].isStringKey; 
+}
 
 bool isAppendingDelimeterNeeded(const StreamToken streamToken, string currentKey) 
 {
@@ -172,7 +175,10 @@ void handleNewValueAddedInList()
   if (getCurrentTokenIsPartOfObjectOrList() == "list" && isLastKeyOfCurrentPathIsIndex()) IncrementIndexInTraversedPathKeysStack();
 }
 
-void setCurrentlyTraversingListOrObject(string value) { currentlyTraversingInListOrObjectStack.push_back(value); }
+void setCurrentlyTraversingListOrObject(string value) 
+{ 
+  currentlyTraversingInListOrObjectStack.push_back(value); 
+}
 
 void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
 {
@@ -181,7 +187,7 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
   bool ignoreEventFlag = false;
   bool shouldAddThisEvent = false;
   bool currentlyValid = isCurrentKeySatisfyJsonPathQuery();
-  bool should_check_list_end_symbol_append = false;
+  bool shouldCheckListEndSymbolAppend = false;
   string previousKey = getCurrentJsonPathKey();
   string finalResult = "";
 
@@ -210,7 +216,7 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
   else if (streamToken.tokenType == LIST_ENDED_TOKEN)
   {
     handleListEnded();
-    shouldAddThisEvent = should_check_list_end_symbol_append = true;
+    shouldAddThisEvent = shouldCheckListEndSymbolAppend = true;
   }
   else if (streamToken.tokenType == OBJECT_STARTED_TOKEN)
   {
@@ -230,7 +236,7 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
   }
   else if (!fg && shouldAddThisEvent && currentlyValid)
   {
-    addTokenInCurrentJsonPathResult(streamToken, previousKey, should_check_list_end_symbol_append);
+    addTokenInCurrentJsonPathResult(streamToken, previousKey, shouldCheckListEndSymbolAppend);
   }
   if (streamToken.tokenType == DOCUMENT_END_TOKEN)
   {
