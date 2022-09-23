@@ -4,7 +4,7 @@
 using namespace std;
 typedef long long int li;
 
-enum FState
+enum StateEnum
 {
     WHITESPACE_STATE,
     INTEGER_STATE,
@@ -34,15 +34,14 @@ enum FState
 };
 class JsonStreamParser
 {
-
     vector<string> tokens;
     bool nextStringWillBeKey = false;
     bool isCompleted = false;
     int charCode = 0;
-    FState state = WHITESPACE_STATE;
+    StateEnum state = WHITESPACE_STATE;
     bool shouldAdvance = true;
     bool addChar = false;
-    FState nextState = WHITESPACE_STATE;
+    StateEnum nextState = WHITESPACE_STATE;
     pair<TokenType, string> previousToken;
     bool previousTokenUnProcessed = false;
     pair<TokenType, string> latestToken = make_pair(NULL_TOKEN, "");
@@ -603,7 +602,6 @@ public:
 
     void startTokenizeV1(char &c)
     {
-        FState uu = TRUE_2_STATE;
         processSingleCharacter(c, charCode);
         state = nextState;
         if (isCompleted)

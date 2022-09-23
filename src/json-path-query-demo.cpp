@@ -58,6 +58,14 @@ bool isLastKeyOfCurrentPathIsIndex()
 
 bool isAppendingDelimeterNeeded(const StreamToken streamToken, string currentKey)
 {
+  /*
+   Example:
+   current Token : KEY TOKEN
+   current result Json : { 'name': 'Samin Yeaser'
+   last added token: VALUE TOKEN
+   So before adding current token to the JSON result I need to add a delimeter
+   This function determines if I need to add a delimeter or not
+  */
   StreamToken lastAddedStreamToken = jsonPathQueryResultsLastAddedTokenMap[currentKey];
   if (lastAddedStreamToken.isDefault)
     return false;
@@ -138,7 +146,7 @@ bool isCurrentKeySatisfyJsonPathQuery()
   return true;
 }
 
-void popKeyFromTraversedKeysStack()
+void popCurrentTraversedKeysStack()
 {
   if (currentTraversedPathKeysStack.size())
     currentTraversedPathKeysStack.pop_back();
@@ -150,7 +158,7 @@ void popCurrentlyTraversingInListOrObjectStack()
     currentlyTraversingInListOrObjectStack.pop_back();
 }
 
-void IncrementIndexInTraversedPathKeysStack()
+void IncrementIndexInTopKeyTraversedPathKeysStack()
 {
   if (isLastKeyOfCurrentPathIsIndex())
     currentTraversedPathKeysStack[currentTraversedPathKeysStack.size() - 1].index++;
@@ -164,29 +172,29 @@ string getCurrentTokenIsPartOfObjectOrList()
 void handleNewListStarted()
 {
   if (getCurrentTokenIsPartOfObjectOrList() == "list" && isLastKeyOfCurrentPathIsIndex())
-    IncrementIndexInTraversedPathKeysStack();
+    IncrementIndexInTopKeyTraversedPathKeysStack();
   currentTraversedPathKeysStack.push_back(KeyClass(-1));
 }
 void handleListEnded()
 {
   popCurrentlyTraversingInListOrObjectStack();
   if (isLastKeyOfCurrentPathIsIndex())
-    popKeyFromTraversedKeysStack();
+    popCurrentTraversedKeysStack();
   if (getCurrentTokenIsPartOfObjectOrList() == "object")
-    popKeyFromTraversedKeysStack();
+    popCurrentTraversedKeysStack();
 }
 
 void handleObjectEnded()
 {
   popCurrentlyTraversingInListOrObjectStack();
   if (getCurrentTokenIsPartOfObjectOrList() == "object")
-    popKeyFromTraversedKeysStack();
+    popCurrentTraversedKeysStack();
 }
 
 void handleNewValueAddedInList()
 {
   if (getCurrentTokenIsPartOfObjectOrList() == "list" && isLastKeyOfCurrentPathIsIndex())
-    IncrementIndexInTraversedPathKeysStack();
+    IncrementIndexInTopKeyTraversedPathKeysStack();
 }
 
 void setCurrentlyTraversingListOrObject(string value)
@@ -214,7 +222,7 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
   {
     if (getCurrentTokenIsPartOfObjectOrList() == "object")
     {
-      popKeyFromTraversedKeysStack();
+      popCurrentTraversedKeysStack();
       shouldAddThisEvent = true;
     }
     else if (getCurrentTokenIsPartOfObjectOrList() == "list")
