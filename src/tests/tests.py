@@ -15,6 +15,10 @@ tests = [
     },
     {
         'fileName': 'code-test.json',
+        'query': '$.skills.lang[*]'
+    },
+    {
+        'fileName': 'code-test.json',
         'query': '$.skills.lang[0]'
     },
     {
@@ -123,7 +127,7 @@ tests = [
     }
 ]
 os.system('clear')
-os.system('g++ demo.cpp')
+os.system('g++ json-path-query-demo.cpp')
 for test in tests:
     sys_call= './a.out '+ test['fileName']+' '+ test['query']
     os.system(sys_call)

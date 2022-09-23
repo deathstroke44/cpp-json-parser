@@ -60,78 +60,69 @@ public:
 
     void emitEvent(int eventType, string value, bool listElement)
     {
-        JsonEventType _JsonSubEventType = JsonEventType::STRING_EVENT;
-        JsonEventType _JsonEventType = JsonEventType::STRING_EVENT;
+        JsonEventType _JsonSubEventType = JsonEventType::VALUE_TOKEN;
+        JsonEventType _JsonEventType;
+        bool isStringValue = false;
         string _value = "";
         if (eventType == 0)
         {
-            _JsonSubEventType = JsonEventType::STRING_EVENT;
-            _JsonEventType = JsonEventType::VALUE_EVENT;
+            _JsonEventType = JsonEventType::VALUE_TOKEN;
+            isStringValue = true;
             _value = value;
         }
         else if (eventType == 2)
         {
-            _JsonSubEventType = JsonEventType::KEY_EVENT;
-            _JsonEventType = _JsonSubEventType;
+            _JsonEventType = KEY_TOKEN;
             _value = value;
         }
         else if (eventType == 3)
         {
-            _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
-            _JsonSubEventType = LIST_STARTED;
+            _JsonEventType = LIST_STARTED_TOKEN;
             _value = "list started";
         }
         else if (eventType == 4)
         {
-            _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
-            _JsonSubEventType = LIST_ENDED;
+            _JsonEventType = LIST_ENDED_TOKEN;
             _value = "list ended";
         }
         else if (eventType == 6)
         {
-            _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
-            _JsonSubEventType = OBJECT_STARTED;
+            _JsonEventType = OBJECT_STARTED_TOKEN;
             _value = "object started";
         }
         else if (eventType == 7)
         {
-            _JsonEventType = JsonEventType::OBJECT_LIST_EVENT;
-            _JsonSubEventType = OBJECT_ENDED;
+            _JsonEventType = OBJECT_ENDED_TOKEN;
             _value = "object ended";
         }
         else if (eventType == 8)
         {
-            _JsonSubEventType = JsonEventType::INTEGER_EVENT;
-            _JsonEventType = JsonEventType::VALUE_EVENT;
+            _JsonEventType = JsonEventType::VALUE_TOKEN;
             _value = value;
         }
         else if (eventType == 9)
         {
-            _JsonSubEventType = JsonEventType::FLOAT_EVENT;
-            _JsonEventType = VALUE_EVENT;
+            _JsonEventType = VALUE_TOKEN;
             _value = value;
         }
         else if (eventType == 10)
         {
-            _JsonSubEventType = JsonEventType::BOOL_EVENT;
-            _JsonEventType = VALUE_EVENT;
+            _JsonEventType = VALUE_TOKEN;
             _value = value;
         }
         else if (eventType == 11)
         {
-            _JsonSubEventType = JsonEventType::EXPONENT_EVENT;
-            _JsonEventType = VALUE_EVENT;
+            _JsonEventType = VALUE_TOKEN;
             _value = value;
         }
         else if (eventType == 12)
         {
-            _JsonSubEventType = JsonEventType::NULL_EVENT;
-            _JsonEventType = VALUE_EVENT;
+            _JsonEventType = VALUE_TOKEN;
             _value = value;
         }
         if (eventType == 0 || (eventType >= 2 && eventType <= 12))
         {
-            JsonStreamEvent jsonStreamEvent(topicName, StreamToken(_JsonEventType, _JsonSubEventType, _value));
+            JsonStreamEvent jsonStreamEvent(topicName, StreamToken(_JsonEventType, _JsonSubEventType, _value, isStringValue));
             eventDispatcher.post(jsonStreamEvent);
         }
     }
@@ -661,7 +652,7 @@ public:
                 startTokenizeV1(c);
             }
         }
-        JsonStreamEvent jsonStreamEvent(topicName, StreamToken(JsonEventType::Document_END, JsonEventType::Document_END, ""));
+        JsonStreamEvent jsonStreamEvent(topicName, StreamToken(JsonEventType::DOCUMENT_END_TOKEN, JsonEventType::DOCUMENT_END_TOKEN, ""));
         eventDispatcher.post(jsonStreamEvent);
     }
 };
