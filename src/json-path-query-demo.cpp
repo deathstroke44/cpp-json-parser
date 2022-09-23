@@ -2,22 +2,22 @@
 using namespace std;
 class KeyClass
 {
-  public:
-    bool isStringKey = false, anyIndex = false, anyKey = false;
-    int index;
-    string key;
-    KeyClass() = default;
-    KeyClass(int index)
-    {
-      this->index = index;
-      anyIndex = (index == -2);
-    };
-    KeyClass(string key, bool dummy)
-    {
-      this->key = key;
-      isStringKey = true;
-      anyKey = (key.length() == 0 || key == "*");
-    };
+public:
+  bool isStringKey = false, anyIndex = false, anyKey = false;
+  int index;
+  string key;
+  KeyClass() = default;
+  KeyClass(int index)
+  {
+    this->index = index;
+    anyIndex = (index == -2);
+  };
+  KeyClass(string key, bool dummy)
+  {
+    this->key = key;
+    isStringKey = true;
+    anyKey = (key.length() == 0 || key == "*");
+  };
 };
 
 //------------------------------------------Stacks and Maps used for path query--------------------------------------------
@@ -25,7 +25,7 @@ class KeyClass
 vector<KeyClass> currentTraversedPathKeysStack;
 // Currently, I am processing a value token that can be an immediate part of a list/object. this stack maintains this information
 // When I got a list/object end token I pop this stack
-// When I got a list/object start token I push list/object value in this stack 
+// When I got a list/object start token I push list/object value in this stack
 vector<string> currentlyTraversingInListOrObjectStack;
 // Example:
 // $.*.info for this query $.bookstore.info and $.superstore.info need to be added in result
@@ -51,34 +51,37 @@ string getCurrentJsonPathKey()
   return str;
 }
 
-bool isLastKeyOfCurrentPathIsIndex() 
-{ 
-  return currentTraversedPathKeysStack.size() && !currentTraversedPathKeysStack[currentTraversedPathKeysStack.size() - 1].isStringKey; 
+bool isLastKeyOfCurrentPathIsIndex()
+{
+  return currentTraversedPathKeysStack.size() && !currentTraversedPathKeysStack[currentTraversedPathKeysStack.size() - 1].isStringKey;
 }
 
-bool isAppendingDelimeterNeeded(const StreamToken streamToken, string currentKey) 
+bool isAppendingDelimeterNeeded(const StreamToken streamToken, string currentKey)
 {
   StreamToken lastAddedStreamToken = jsonPathQueryResultsLastAddedTokenMap[currentKey];
-  if (lastAddedStreamToken.isDefault) return false;
-  if (streamToken.tokenType == LIST_ENDED_TOKEN || streamToken.tokenType == OBJECT_ENDED_TOKEN) {
+  if (lastAddedStreamToken.isDefault)
+    return false;
+  if (streamToken.tokenType == LIST_ENDED_TOKEN || streamToken.tokenType == OBJECT_ENDED_TOKEN)
+  {
     return false;
   }
-  if (streamToken.tokenType==VALUE_TOKEN || streamToken.tokenType == LIST_STARTED_TOKEN || streamToken.tokenType == OBJECT_STARTED_TOKEN) {
-    return lastAddedStreamToken.tokenType==VALUE_TOKEN || lastAddedStreamToken.tokenType==OBJECT_ENDED_TOKEN || lastAddedStreamToken.tokenType==LIST_ENDED_TOKEN;
+  if (streamToken.tokenType == VALUE_TOKEN || streamToken.tokenType == LIST_STARTED_TOKEN || streamToken.tokenType == OBJECT_STARTED_TOKEN)
+  {
+    return lastAddedStreamToken.tokenType == VALUE_TOKEN || lastAddedStreamToken.tokenType == OBJECT_ENDED_TOKEN || lastAddedStreamToken.tokenType == LIST_ENDED_TOKEN;
   }
-  if (streamToken.tokenType==KEY_TOKEN) {
-    return lastAddedStreamToken.tokenType!=OBJECT_STARTED_TOKEN;
+  if (streamToken.tokenType == KEY_TOKEN)
+  {
+    return lastAddedStreamToken.tokenType != OBJECT_STARTED_TOKEN;
   }
   return false;
-  
 }
 
 void addTokenInCurrentJsonPathResult(const StreamToken streamToken, string currentKey, bool listEndTagCheck = false)
-{  
+{
   string oneOfTheDesiredJsonFromSpecificPath = jsonPathQueryResultsMap[currentKey];
   bool isThisKeyNewKey = jsonPathQueryResultsLastAddedTokenMap[currentKey].isDefault;
-  oneOfTheDesiredJsonFromSpecificPath.append(isAppendingDelimeterNeeded(streamToken, currentKey)? ",":"");
-  jsonPathQueryResultsLastAddedTokenMap[currentKey]=streamToken;
+  oneOfTheDesiredJsonFromSpecificPath.append(isAppendingDelimeterNeeded(streamToken, currentKey) ? "," : "");
+  jsonPathQueryResultsLastAddedTokenMap[currentKey] = streamToken;
   bool tokenAdded = true;
 
   if (streamToken.tokenType == JsonEventType::KEY_TOKEN)
@@ -87,7 +90,7 @@ void addTokenInCurrentJsonPathResult(const StreamToken streamToken, string curre
   }
   if (streamToken.tokenType == VALUE_TOKEN)
   {
-    oneOfTheDesiredJsonFromSpecificPath.append(streamToken.isStringValue? "\"" + streamToken.value + "\"": streamToken.value);
+    oneOfTheDesiredJsonFromSpecificPath.append(streamToken.isStringValue ? "\"" + streamToken.value + "\"" : streamToken.value);
   }
   if (streamToken.tokenType == LIST_STARTED_TOKEN)
   {
@@ -97,7 +100,8 @@ void addTokenInCurrentJsonPathResult(const StreamToken streamToken, string curre
   {
     oneOfTheDesiredJsonFromSpecificPath.push_back(']');
   }
-  else if (streamToken.tokenType == LIST_ENDED_TOKEN) {
+  else if (streamToken.tokenType == LIST_ENDED_TOKEN)
+  {
     tokenAdded = false;
   }
   if (streamToken.tokenType == OBJECT_STARTED_TOKEN)
@@ -108,9 +112,10 @@ void addTokenInCurrentJsonPathResult(const StreamToken streamToken, string curre
   {
     oneOfTheDesiredJsonFromSpecificPath.push_back('}');
   }
-  if(tokenAdded) 
+  if (tokenAdded)
   {
-    if (isThisKeyNewKey) {
+    if (isThisKeyNewKey)
+    {
       jsonPathQueryResultKeys.push_back(currentKey);
     }
     jsonPathQueryResultsMap[currentKey] = oneOfTheDesiredJsonFromSpecificPath;
@@ -119,13 +124,15 @@ void addTokenInCurrentJsonPathResult(const StreamToken streamToken, string curre
 
 bool isCurrentKeySatisfyJsonPathQuery()
 {
-  if (jsonPathQueryTokenized.size() > currentTraversedPathKeysStack.size()) return false; 
+  if (jsonPathQueryTokenized.size() > currentTraversedPathKeysStack.size())
+    return false;
   for (int i = 0; i < jsonPathQueryTokenized.size(); i++)
   {
     KeyClass currentKey = currentTraversedPathKeysStack[i], jsonPathQueryKey = jsonPathQueryTokenized[i];
     if ((jsonPathQueryKey.isStringKey != currentKey.isStringKey) || (jsonPathQueryKey.isStringKey && !(jsonPathQueryKey.anyKey || jsonPathQueryKey.key == currentKey.key)) || (!jsonPathQueryKey.isStringKey && (!((jsonPathQueryKey.anyIndex && currentKey.index != -1) || jsonPathQueryKey.index == currentKey.index))))
     {
-      return false;;
+      return false;
+      ;
     }
   }
   return true;
@@ -133,17 +140,20 @@ bool isCurrentKeySatisfyJsonPathQuery()
 
 void popKeyFromTraversedKeysStack()
 {
-  if (currentTraversedPathKeysStack.size()) currentTraversedPathKeysStack.pop_back();
+  if (currentTraversedPathKeysStack.size())
+    currentTraversedPathKeysStack.pop_back();
 }
 
 void popCurrentlyTraversingInListOrObjectStack()
 {
-  if (currentlyTraversingInListOrObjectStack.size() > 0) currentlyTraversingInListOrObjectStack.pop_back();
+  if (currentlyTraversingInListOrObjectStack.size() > 0)
+    currentlyTraversingInListOrObjectStack.pop_back();
 }
 
 void IncrementIndexInTraversedPathKeysStack()
 {
-  if (isLastKeyOfCurrentPathIsIndex()) currentTraversedPathKeysStack[currentTraversedPathKeysStack.size() - 1].index++;
+  if (isLastKeyOfCurrentPathIsIndex())
+    currentTraversedPathKeysStack[currentTraversedPathKeysStack.size() - 1].index++;
 }
 
 string getCurrentTokenIsPartOfObjectOrList()
@@ -153,31 +163,35 @@ string getCurrentTokenIsPartOfObjectOrList()
 
 void handleNewListStarted()
 {
-  if (getCurrentTokenIsPartOfObjectOrList() == "list" && isLastKeyOfCurrentPathIsIndex()) IncrementIndexInTraversedPathKeysStack();
+  if (getCurrentTokenIsPartOfObjectOrList() == "list" && isLastKeyOfCurrentPathIsIndex())
+    IncrementIndexInTraversedPathKeysStack();
   currentTraversedPathKeysStack.push_back(KeyClass(-1));
 }
 void handleListEnded()
 {
   popCurrentlyTraversingInListOrObjectStack();
-  if (isLastKeyOfCurrentPathIsIndex())  popKeyFromTraversedKeysStack();
-  if (getCurrentTokenIsPartOfObjectOrList() == "object") popKeyFromTraversedKeysStack();
+  if (isLastKeyOfCurrentPathIsIndex())
+    popKeyFromTraversedKeysStack();
+  if (getCurrentTokenIsPartOfObjectOrList() == "object")
+    popKeyFromTraversedKeysStack();
 }
-
 
 void handleObjectEnded()
 {
   popCurrentlyTraversingInListOrObjectStack();
-  if (getCurrentTokenIsPartOfObjectOrList() == "object") popKeyFromTraversedKeysStack();
+  if (getCurrentTokenIsPartOfObjectOrList() == "object")
+    popKeyFromTraversedKeysStack();
 }
 
 void handleNewValueAddedInList()
 {
-  if (getCurrentTokenIsPartOfObjectOrList() == "list" && isLastKeyOfCurrentPathIsIndex()) IncrementIndexInTraversedPathKeysStack();
+  if (getCurrentTokenIsPartOfObjectOrList() == "list" && isLastKeyOfCurrentPathIsIndex())
+    IncrementIndexInTraversedPathKeysStack();
 }
 
-void setCurrentlyTraversingListOrObject(string value) 
-{ 
-  currentlyTraversingInListOrObjectStack.push_back(value); 
+void setCurrentlyTraversingListOrObject(string value)
+{
+  currentlyTraversingInListOrObjectStack.push_back(value);
 }
 
 void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
@@ -220,7 +234,8 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
   }
   else if (streamToken.tokenType == OBJECT_STARTED_TOKEN)
   {
-    if (getCurrentTokenIsPartOfObjectOrList() == "list") handleNewValueAddedInList();
+    if (getCurrentTokenIsPartOfObjectOrList() == "list")
+      handleNewValueAddedInList();
     setCurrentlyTraversingListOrObject("object");
   }
   else if (streamToken.tokenType == OBJECT_ENDED_TOKEN)
@@ -244,12 +259,17 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
     {
       string key = *it;
       string value = jsonPathQueryResultsMap[key];
-      cout<<"All answers: "<<key<<" -> "<<value<<endl;
-      if (finalResult.length()) finalResult.push_back(',');
+      cout << "All answers: " << key << " -> " << value << endl;
+      if (finalResult.length())
+        finalResult.push_back(',');
       finalResult.append(value);
     }
-    if (multiResultExist) { finalResult = "[" + finalResult + "]"; }
-    std::cout << "Got value of desired key final result: " << endl << finalResult << endl;
+    if (multiResultExist)
+    {
+      finalResult = "[" + finalResult + "]";
+    }
+    std::cout << "Got value of desired key final result: " << endl
+              << finalResult << endl;
     // if (finalResult.length()) {
     //   cout<<finalResult<<","<<endl;
     // }
@@ -288,7 +308,8 @@ void processJsonPathQuery(string jsonPathQuery)
     }
     else if (jsonPathQuery[i] == '[')
     {
-      if (i - 1 != lastDotIndex && i - 1 != lastListEnd) addKeyToJsonPathQueryProcessedList(listIndex, curr);
+      if (i - 1 != lastDotIndex && i - 1 != lastListEnd)
+        addKeyToJsonPathQueryProcessedList(listIndex, curr);
       listIndex = true;
       curr = "";
     }
@@ -299,9 +320,11 @@ void processJsonPathQuery(string jsonPathQuery)
       curr = "";
       lastListEnd = i;
     }
-    else curr.push_back(jsonPathQuery[i]);
+    else
+      curr.push_back(jsonPathQuery[i]);
   }
-  if (curr.length()) addKeyToJsonPathQueryProcessedList(listIndex, curr);
+  if (curr.length())
+    addKeyToJsonPathQueryProcessedList(listIndex, curr);
 
   for (int i = 0; i < jsonPathQueryTokenized.size(); i++)
   {
@@ -311,11 +334,11 @@ void processJsonPathQuery(string jsonPathQuery)
 
 int main(int argc, char **argv)
 {
-  freopen("output.txt","a+",stdout);
+  freopen("output.txt", "a+", stdout);
   JsonStreamParser jsonStreamParser = JsonStreamParser();
   string fileName(argv[1]);
   string jsonPathQuery(argv[2]);
-  cout<<"JSON path query:"<<jsonPathQuery<<" -filename: "<<fileName<<endl;
+  cout << "JSON path query:" << jsonPathQuery << " -filename: " << fileName << endl;
   fileName = "tests/Json files/" + fileName;
   KeyClass keyClass("$", true);
   currentTraversedPathKeysStack.push_back(keyClass);

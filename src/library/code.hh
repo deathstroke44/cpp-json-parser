@@ -4,7 +4,6 @@
 using namespace std;
 typedef long long int li;
 
-
 enum FState
 {
     WHITESPACE_STATE,
