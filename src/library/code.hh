@@ -1,11 +1,11 @@
 #include <bits/stdc++.h>
 #include "Dispatcher.hh"
 #include "Event.hh"
+
 using namespace std;
 typedef long long int li;
 
-enum StateEnum
-{
+enum StateEnum {
     WHITESPACE_STATE,
     INTEGER_STATE,
     INTEGER_SIGN_STATE,
@@ -32,9 +32,9 @@ enum StateEnum
     UNICODE_3_STATE,
     UNICODE_4_STATE
 };
-class JsonStreamParser
-{
-    vector<string> tokens;
+
+class JsonStreamParser {
+    vector <string> tokens;
     bool nextStringWillBeKey = false;
     bool isCompleted = false;
     int charCode = 0;
@@ -42,189 +42,134 @@ class JsonStreamParser
     bool shouldAdvance = true;
     bool addChar = false;
     StateEnum nextState = WHITESPACE_STATE;
-    pair<TokenType, string> previousToken;
+    pair <TokenType, string> previousToken;
     bool previousTokenUnProcessed = false;
-    pair<TokenType, string> latestToken = make_pair(NULL_TOKEN, "");
+    pair <TokenType, string> latestToken = make_pair(NULL_TOKEN, "");
 
 public:
     Dispatcher<string> eventDispatcher = Dispatcher<string>();
     bool stopEmittingEvent = false;
     string topicName = "jsonStreamTopic";
 
-    void setEventHandler(void (*func)(const JsonStreamEvent<string> &))
-    {
+    void setEventHandler(void (*func)(const JsonStreamEvent<string> &)) {
         eventDispatcher.subscribe(topicName, func);
     }
 
-    void emitEvent(int eventType, string value, bool listElement)
-    {
+    void emitEvent(int eventType, string value, bool listElement) {
         JsonEventType _JsonSubEventType = JsonEventType::VALUE_TOKEN;
         JsonEventType _JsonEventType;
         bool isStringValue = false;
         string _value = "";
-        if (eventType == 0)
-        {
+        if (eventType == 0) {
             _JsonEventType = JsonEventType::VALUE_TOKEN;
             isStringValue = true;
             _value = value;
-        }
-        else if (eventType == 2)
-        {
+        } else if (eventType == 2) {
             _JsonEventType = KEY_TOKEN;
             _value = value;
-        }
-        else if (eventType == 3)
-        {
+        } else if (eventType == 3) {
             _JsonEventType = LIST_STARTED_TOKEN;
             _value = "list started";
-        }
-        else if (eventType == 4)
-        {
+        } else if (eventType == 4) {
             _JsonEventType = LIST_ENDED_TOKEN;
             _value = "list ended";
-        }
-        else if (eventType == 6)
-        {
+        } else if (eventType == 6) {
             _JsonEventType = OBJECT_STARTED_TOKEN;
             _value = "object started";
-        }
-        else if (eventType == 7)
-        {
+        } else if (eventType == 7) {
             _JsonEventType = OBJECT_ENDED_TOKEN;
             _value = "object ended";
-        }
-        else if (eventType == 8)
-        {
+        } else if (eventType == 8) {
             _JsonEventType = JsonEventType::VALUE_TOKEN;
             _value = value;
-        }
-        else if (eventType == 9)
-        {
+        } else if (eventType == 9) {
+            _JsonEventType = VALUE_TOKEN;
+            _value = value;
+        } else if (eventType == 10) {
+            _JsonEventType = VALUE_TOKEN;
+            _value = value;
+        } else if (eventType == 11) {
+            _JsonEventType = VALUE_TOKEN;
+            _value = value;
+        } else if (eventType == 12) {
             _JsonEventType = VALUE_TOKEN;
             _value = value;
         }
-        else if (eventType == 10)
-        {
-            _JsonEventType = VALUE_TOKEN;
-            _value = value;
-        }
-        else if (eventType == 11)
-        {
-            _JsonEventType = VALUE_TOKEN;
-            _value = value;
-        }
-        else if (eventType == 12)
-        {
-            _JsonEventType = VALUE_TOKEN;
-            _value = value;
-        }
-        if (eventType == 0 || (eventType >= 2 && eventType <= 12))
-        {
+        if (eventType == 0 || (eventType >= 2 && eventType <= 12)) {
             JsonStreamEvent jsonStreamEvent(topicName, StreamToken(_JsonEventType, _value, isStringValue));
             eventDispatcher.post(jsonStreamEvent);
         }
     }
 
-    void processPreviousToken(pair<TokenType, string> previousToken, pair<TokenType, string> currentToken)
-    {
-        currentToken.second == ":" ? emitEvent(2, previousToken.second, false) : emitEvent(0, previousToken.second, false);
+    void processPreviousToken(pair <TokenType, string> previousToken, pair <TokenType, string> currentToken) {
+        currentToken.second == ":" ? emitEvent(2, previousToken.second, false) : emitEvent(0, previousToken.second,
+                                                                                           false);
     }
 
-    void streamToken(pair<TokenType, string> token, bool printKeyEndEvent)
-    {
-        if (previousTokenUnProcessed)
-        {
+    void streamToken(pair <TokenType, string> token, bool printKeyEndEvent) {
+        if (previousTokenUnProcessed) {
             processPreviousToken(previousToken, token);
         }
         previousTokenUnProcessed = false;
         TokenType tokenType = token.first;
         string tokenValue = token.second;
         previousToken = token;
-        if (tokenType == OPERATOR_TOKEN)
-        {
-            if (tokenValue == "[")
-            {
+        if (tokenType == OPERATOR_TOKEN) {
+            if (tokenValue == "[") {
                 emitEvent(3, "list", false);
-            }
-            else if (tokenValue == "]")
-            {
+            } else if (tokenValue == "]") {
                 emitEvent(4, "list", false);
-            }
-            else if (tokenValue == "}")
-            {
+            } else if (tokenValue == "}") {
                 emitEvent(7, "object", false);
-            }
-            else if (tokenValue == "{")
-            {
+            } else if (tokenValue == "{") {
                 emitEvent(6, "object", false);
             }
-        }
-        else if (tokenType == STRING_TOKEN)
-        {
+        } else if (tokenType == STRING_TOKEN) {
             previousTokenUnProcessed = true;
             return;
-        }
-        else if (tokenType == INTEGER_TOKEN)
-        {
+        } else if (tokenType == INTEGER_TOKEN) {
             emitEvent(8, tokenValue, false);
-        }
-        else if (tokenType == FLOAT_TOKEN)
-        {
+        } else if (tokenType == FLOAT_TOKEN) {
             emitEvent(9, tokenValue, false);
-        }
-        else if (tokenType == EXP_TOKEN)
-        {
+        } else if (tokenType == EXP_TOKEN) {
             emitEvent(11, tokenValue, false);
-        }
-        else if (tokenType == BOOLEAN_TOKEN)
-        {
+        } else if (tokenType == BOOLEAN_TOKEN) {
             emitEvent(10, tokenValue, false);
-        }
-        else if (tokenType == NULL_TOKEN)
-        {
+        } else if (tokenType == NULL_TOKEN) {
             emitEvent(12, tokenValue, false);
         }
     }
 
-    void processNewToken(pair<TokenType, string> token)
-    {
+    void processNewToken(pair <TokenType, string> token) {
         // cout << "\nNew Generated Token: "<< token.first << " "<<token.second<<endl;
         streamToken(token, true);
     }
 
-    string mergeTokens()
-    {
+    string mergeTokens() {
         string str = "";
-        for (int i = 0; i < tokens.size(); i++)
-        {
+        for (int i = 0; i < tokens.size(); i++) {
             // cout<<"\nTokens "<< tokens[i]<< endl;
             str.append(tokens.at(i));
         }
         return str;
     }
 
-    bool isDelimiter(char c)
-    {
+    bool isDelimiter(char c) {
         return c == ' ' || c == '{' || c == '}' || c == '[' || c == ']' || c == ':' || c == ',';
     }
 
-    bool isCharInRange(char c, int _mn, int _mx)
-    {
+    bool isCharInRange(char c, int _mn, int _mx) {
         return ((c - '0') >= _mn && (c - '0') <= _mx);
     }
 
-    bool isCharInRangeV1(char c, char _mn, char _mx)
-    {
+    bool isCharInRangeV1(char c, char _mn, char _mx) {
         return (c >= _mn && c <= _mx);
     }
 
-    void handleWhitespaceState(char &c, int &char_code)
-    {
+    void handleWhitespaceState(char &c, int &char_code) {
         vector<char> common_cases = {'{', '}', '[', ']', ',', ':'};
-        for (auto i = common_cases.begin(); i != common_cases.end(); ++i)
-        {
-            if (*i == c)
-            {
+        for (auto i = common_cases.begin(); i != common_cases.end(); ++i) {
+            if (*i == c) {
                 string s;
                 s.push_back(c);
                 isCompleted = true;
@@ -232,312 +177,231 @@ public:
                 return;
             }
         }
-        switch (c)
-        {
-        case '\"':
-            /* code */
-            nextState = STRING_STATE;
-            break;
-        case '0':
-            /* code */
-            nextState = INTEGER_0_STATE;
-            addChar = true;
-            break;
-        case '-':
-            /* code */
-            nextState = INTEGER_SIGN_STATE;
-            addChar = true;
-            break;
-        case 'f':
-            /* code */
-            nextState = FALSE_1_STATE;
-            break;
-        case 't':
-            /* code */
-            nextState = TRUE_1_STATE;
-            break;
-        case 'n':
-            /* code */
-            nextState = NULL_1_STATE;
-            break;
-
-        default:
-            if (isCharInRange(c, 1, 9))
-            {
-                nextState = INTEGER_STATE;
-                addChar = true;
-            }
-            break;
-        }
-    }
-
-    void handleIntegerState(char &c, int &char_code)
-    {
-        switch (state)
-        {
-        case INTEGER_0_STATE:
-        {
-            if (c == '.')
-            {
-                nextState = FLOATING_POINT_0_STATE;
-                addChar = true;
-            }
-            else if (c == 'e' || c == 'E')
-            {
-                nextState = INTEGER_EXP_0_STATE;
-                addChar = true;
-            }
-            else if (isDelimiter(c))
-            {
-                nextState = WHITESPACE_STATE;
-                isCompleted = true;
-                latestToken = make_pair(INTEGER_TOKEN, "0");
-                shouldAdvance = false;
-            }
-            break;
-        }
-
-        case INTEGER_SIGN_STATE:
-        {
-            if (c == '0')
-            {
+        switch (c) {
+            case '\"':
+                /* code */
+                nextState = STRING_STATE;
+                break;
+            case '0':
+                /* code */
                 nextState = INTEGER_0_STATE;
                 addChar = true;
-            }
-            else if (isCharInRange(c, 1, 9))
-            {
-                nextState = INTEGER_STATE;
+                break;
+            case '-':
+                /* code */
+                nextState = INTEGER_SIGN_STATE;
                 addChar = true;
-            }
-            break;
-        }
+                break;
+            case 'f':
+                /* code */
+                nextState = FALSE_1_STATE;
+                break;
+            case 't':
+                /* code */
+                nextState = TRUE_1_STATE;
+                break;
+            case 'n':
+                /* code */
+                nextState = NULL_1_STATE;
+                break;
 
-        case INTEGER_EXP_0_STATE:
-        {
-            if (c == '+' || c == '-' || isCharInRange(c, 0, 9))
-            {
-                nextState = INTEGER_EXP_STATE;
-                addChar = true;
-            }
-            break;
-        }
-
-        case INTEGER_EXP_STATE:
-        {
-            if (isCharInRange(c, 0, 9))
-            {
-                addChar = true;
-            }
-            else if (isDelimiter(c))
-            {
-                isCompleted = true;
-                latestToken = make_pair(EXP_TOKEN, mergeTokens());
-                nextState = WHITESPACE_STATE;
-                shouldAdvance = false;
-            }
-            break;
-        }
-
-        case INTEGER_STATE:
-        {
-            if (isCharInRange(c, 0, 9))
-            {
-                addChar = true;
-            }
-            else if (isDelimiter(c))
-            {
-                isCompleted = true;
-                latestToken = make_pair(INTEGER_TOKEN, mergeTokens());
-                nextState = WHITESPACE_STATE;
-                shouldAdvance = false;
-            }
-            else if (c == '.')
-            {
-                addChar = true;
-                nextState = FLOATING_POINT_0_STATE;
-            }
-            else if (c == 'E' || c == 'e')
-            {
-                addChar = true;
-                nextState = INTEGER_EXP_0_STATE;
-            }
-            break;
-        }
-
-        default:
-            break;
+            default:
+                if (isCharInRange(c, 1, 9)) {
+                    nextState = INTEGER_STATE;
+                    addChar = true;
+                }
+                break;
         }
     }
 
-    void handleFloatState(char &c, int &charCode)
-    {
-        if (state == FLOATING_POINT_STATE)
-        {
-            if (isCharInRange(c, 0, 9))
-            {
-                addChar = true;
-            }
-            else if (c == 'e' or c == 'E')
-            {
-                nextState = INTEGER_EXP_0_STATE;
-                addChar = true;
+    void handleIntegerState(char &c, int &char_code) {
+        switch (state) {
+            case INTEGER_0_STATE: {
+                if (c == '.') {
+                    nextState = FLOATING_POINT_0_STATE;
+                    addChar = true;
+                } else if (c == 'e' || c == 'E') {
+                    nextState = INTEGER_EXP_0_STATE;
+                    addChar = true;
+                } else if (isDelimiter(c)) {
+                    nextState = WHITESPACE_STATE;
+                    isCompleted = true;
+                    latestToken = make_pair(INTEGER_TOKEN, "0");
+                    shouldAdvance = false;
+                }
+                break;
             }
 
-            else if (isDelimiter(c))
-            {
+            case INTEGER_SIGN_STATE: {
+                if (c == '0') {
+                    nextState = INTEGER_0_STATE;
+                    addChar = true;
+                } else if (isCharInRange(c, 1, 9)) {
+                    nextState = INTEGER_STATE;
+                    addChar = true;
+                }
+                break;
+            }
+
+            case INTEGER_EXP_0_STATE: {
+                if (c == '+' || c == '-' || isCharInRange(c, 0, 9)) {
+                    nextState = INTEGER_EXP_STATE;
+                    addChar = true;
+                }
+                break;
+            }
+
+            case INTEGER_EXP_STATE: {
+                if (isCharInRange(c, 0, 9)) {
+                    addChar = true;
+                } else if (isDelimiter(c)) {
+                    isCompleted = true;
+                    latestToken = make_pair(EXP_TOKEN, mergeTokens());
+                    nextState = WHITESPACE_STATE;
+                    shouldAdvance = false;
+                }
+                break;
+            }
+
+            case INTEGER_STATE: {
+                if (isCharInRange(c, 0, 9)) {
+                    addChar = true;
+                } else if (isDelimiter(c)) {
+                    isCompleted = true;
+                    latestToken = make_pair(INTEGER_TOKEN, mergeTokens());
+                    nextState = WHITESPACE_STATE;
+                    shouldAdvance = false;
+                } else if (c == '.') {
+                    addChar = true;
+                    nextState = FLOATING_POINT_0_STATE;
+                } else if (c == 'E' || c == 'e') {
+                    addChar = true;
+                    nextState = INTEGER_EXP_0_STATE;
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+    }
+
+    void handleFloatState(char &c, int &charCode) {
+        if (state == FLOATING_POINT_STATE) {
+            if (isCharInRange(c, 0, 9)) {
+                addChar = true;
+            } else if (c == 'e' or c == 'E') {
+                nextState = INTEGER_EXP_0_STATE;
+                addChar = true;
+            } else if (isDelimiter(c)) {
                 isCompleted = true;
                 latestToken = make_pair(FLOAT_TOKEN, mergeTokens());
                 nextState = WHITESPACE_STATE;
                 shouldAdvance = false;
             }
-        }
-        else if (state == FLOATING_POINT_0_STATE)
-        {
-            if (isCharInRange(c, 0, 9))
-            {
+        } else if (state == FLOATING_POINT_0_STATE) {
+            if (isCharInRange(c, 0, 9)) {
                 nextState = FLOATING_POINT_STATE;
                 addChar = true;
             }
         }
     }
 
-    void handleTrueState(char &c, int &charCode)
-    {
-        if (state == TRUE_1_STATE && c == 'r')
-        {
+    void handleTrueState(char &c, int &charCode) {
+        if (state == TRUE_1_STATE && c == 'r') {
             nextState = TRUE_2_STATE;
         }
-        if (state == TRUE_2_STATE && c == 'u')
-        {
+        if (state == TRUE_2_STATE && c == 'u') {
             nextState = TRUE_3_STATE;
         }
-        if (state == TRUE_3_STATE && c == 'e')
-        {
+        if (state == TRUE_3_STATE && c == 'e') {
             nextState = WHITESPACE_STATE;
             isCompleted = true;
             latestToken = make_pair(BOOLEAN_TOKEN, "true");
         }
     }
 
-    void handleFalseState(char &c, int &charCode)
-    {
-        if (state == FALSE_1_STATE && c == 'a')
-        {
+    void handleFalseState(char &c, int &charCode) {
+        if (state == FALSE_1_STATE && c == 'a') {
             nextState = FALSE_2_STATE;
-        }
-        else if (state == FALSE_2_STATE && c == 'l')
-        {
+        } else if (state == FALSE_2_STATE && c == 'l') {
             nextState = FALSE_3_STATE;
-        }
-        else if (state == FALSE_3_STATE && c == 's')
-        {
+        } else if (state == FALSE_3_STATE && c == 's') {
             nextState = FALSE_4_STATE;
-        }
-        else if (state == FALSE_4_STATE && c == 'e')
-        {
+        } else if (state == FALSE_4_STATE && c == 'e') {
             nextState = WHITESPACE_STATE;
             isCompleted = true;
             latestToken = make_pair(BOOLEAN_TOKEN, "false");
         }
     }
 
-    void handleNullState(char &c, int &charCode)
-    {
-        if (state == NULL_1_STATE && c == 'u')
-        {
+    void handleNullState(char &c, int &charCode) {
+        if (state == NULL_1_STATE && c == 'u') {
             nextState = NULL_2_STATE;
         }
-        if (state == NULL_2_STATE && c == 'l')
-        {
+        if (state == NULL_2_STATE && c == 'l') {
             nextState = NULL_3_STATE;
         }
-        if (state == NULL_3_STATE && c == 'l')
-        {
+        if (state == NULL_3_STATE && c == 'l') {
             nextState = WHITESPACE_STATE;
             isCompleted = true;
             latestToken = make_pair(NULL_TOKEN, "null");
         }
     }
 
-    void handleStringState(char &c, int &charCode)
-    {
+    void handleStringState(char &c, int &charCode) {
         int unicodeMultiplier = 1;
-        if (state == UNICODE_1_STATE)
-        {
+        if (state == UNICODE_1_STATE) {
             unicodeMultiplier = 16 * 16 * 16;
         }
-        if (state == UNICODE_2_STATE)
-        {
+        if (state == UNICODE_2_STATE) {
             unicodeMultiplier = 16 * 16;
         }
-        if (state == UNICODE_3_STATE)
-        {
+        if (state == UNICODE_3_STATE) {
             unicodeMultiplier = 16;
         }
-        if (state == UNICODE_4_STATE)
-        {
+        if (state == UNICODE_4_STATE) {
             unicodeMultiplier = 1;
         }
-        if (state == STRING_ESCAPE_STATE)
-        {
+        if (state == STRING_ESCAPE_STATE) {
 
             nextState = STRING_STATE;
             vector<char> charList1 = {'b', 'f', 'n', 't', 'r', '/', '\\', '\"'};
-            vector<string> charList2 = {"\b", "\f", "\n", "\t", "\r", "/", "\\", "\""};
+            vector <string> charList2 = {"\b", "\f", "\n", "\t", "\r", "/", "\\", "\""};
             bool matched = false;
-            for (int ch = 0; ch < charList1.size(); ch++)
-            {
-                if (charList1[ch] == c)
-                {
+            for (int ch = 0; ch < charList1.size(); ch++) {
+                if (charList1[ch] == c) {
                     tokens.push_back(charList2[ch]);
                     addChar = false;
                 }
             }
-            if (c == 'u' && !matched)
-            {
+            if (c == 'u' && !matched) {
                 nextState = UNICODE_1_STATE;
                 charCode = 0;
             }
-        }
-        else if (state == STRING_STATE)
-        {
-            if (c == '\"')
-            {
+        } else if (state == STRING_STATE) {
+            if (c == '\"') {
                 isCompleted = true;
                 latestToken = make_pair(STRING_TOKEN, mergeTokens());
                 nextState = STRING_END_STATE;
                 // cout<<"Debug 1:"<< mergeTokens()<<endl;
-            }
-            else if (c == '\\')
-            {
+            } else if (c == '\\') {
                 nextState = STRING_ESCAPE_STATE;
-            }
-            else
-            {
+            } else {
                 addChar = true;
             }
-        }
-        else if (state == STRING_END_STATE)
-        {
-            if (isDelimiter(c))
-            {
+        } else if (state == STRING_END_STATE) {
+            if (isDelimiter(c)) {
                 shouldAdvance = false;
                 nextState = WHITESPACE_STATE;
             }
-        }
-
-        else if (state == UNICODE_1_STATE || state == UNICODE_2_STATE || state == UNICODE_3_STATE || state == UNICODE_4_STATE)
-        {
-            if (isCharInRangeV1(c, '0', '9'))
-            {
+        } else if (state == UNICODE_1_STATE || state == UNICODE_2_STATE || state == UNICODE_3_STATE ||
+                   state == UNICODE_4_STATE) {
+            if (isCharInRangeV1(c, '0', '9')) {
                 charCode += (c - 48) * unicodeMultiplier;
-            }
-            else if (isCharInRangeV1(c, 'a', 'f'))
-            {
+            } else if (isCharInRangeV1(c, 'a', 'f')) {
                 charCode += (c - 87) * unicodeMultiplier;
-            }
-            else if (isCharInRangeV1(c, 'A', 'F'))
-            {
+            } else if (isCharInRangeV1(c, 'A', 'F')) {
                 charCode += (c - 55) * unicodeMultiplier;
             }
 
@@ -547,8 +411,7 @@ public:
                 nextState = UNICODE_3_STATE;
             if (state == UNICODE_3_STATE)
                 nextState = UNICODE_4_STATE;
-            if (state == UNICODE_4_STATE)
-            {
+            if (state == UNICODE_4_STATE) {
                 nextState = STRING_STATE;
                 c = charCode;
                 addChar = true;
@@ -556,64 +419,48 @@ public:
         }
     }
 
-    void processSingleCharacter(char c, int charCode)
-    {
+    void processSingleCharacter(char c, int charCode) {
         shouldAdvance = true;
         addChar = false;
         nextState = state;
 
         {
-            if (state == WHITESPACE_STATE)
-            {
+            if (state == WHITESPACE_STATE) {
                 handleWhitespaceState(c, charCode);
-            }
-            else if (state == INTEGER_0_STATE || state == INTEGER_SIGN_STATE || state == INTEGER_STATE || state == INTEGER_EXP_STATE || state == INTEGER_EXP_0_STATE)
-            {
+            } else if (state == INTEGER_0_STATE || state == INTEGER_SIGN_STATE || state == INTEGER_STATE ||
+                       state == INTEGER_EXP_STATE || state == INTEGER_EXP_0_STATE) {
                 handleIntegerState(c, charCode);
-            }
-            else if (state == FLOATING_POINT_0_STATE || state == FLOATING_POINT_STATE)
-            {
+            } else if (state == FLOATING_POINT_0_STATE || state == FLOATING_POINT_STATE) {
                 handleFloatState(c, charCode);
-            }
-            else if (state == TRUE_1_STATE || state == TRUE_2_STATE || state == TRUE_3_STATE)
-            {
+            } else if (state == TRUE_1_STATE || state == TRUE_2_STATE || state == TRUE_3_STATE) {
                 handleTrueState(c, charCode);
-            }
-            else if (state == FALSE_1_STATE || state == FALSE_2_STATE || state == FALSE_3_STATE || state == FALSE_4_STATE)
-            {
+            } else if (state == FALSE_1_STATE || state == FALSE_2_STATE || state == FALSE_3_STATE ||
+                       state == FALSE_4_STATE) {
                 handleFalseState(c, charCode);
-            }
-            else if (state == NULL_1_STATE || state == NULL_2_STATE || state == NULL_3_STATE)
-            {
+            } else if (state == NULL_1_STATE || state == NULL_2_STATE || state == NULL_3_STATE) {
                 handleNullState(c, charCode);
-            }
-            else
-            {
+            } else {
                 handleStringState(c, charCode);
             }
         }
-        if (addChar)
-        {
+        if (addChar) {
             string s = "";
             s.push_back(c);
             tokens.push_back(s);
         }
     }
 
-    void startTokenizeV1(char &c)
-    {
+    void startTokenizeV1(char &c) {
         processSingleCharacter(c, charCode);
         state = nextState;
-        if (isCompleted)
-        {
+        if (isCompleted) {
             isCompleted = false;
             tokens.clear();
             processNewToken(latestToken);
         }
     }
 
-    void startJsonStreaming(string fileName)
-    {
+    void startJsonStreaming(string fileName) {
         tokens.clear();
         isCompleted = false;
         charCode = 0;
@@ -624,21 +471,14 @@ public:
         fs >> std::noskipws;
         char c;
         int idx = 0;
-        while (true && !stopEmittingEvent)
-        {
-            if (shouldAdvance)
-            {
-                if (fs >> c)
-                {
+        while (true && !stopEmittingEvent) {
+            if (shouldAdvance) {
+                if (fs >> c) {
                     startTokenizeV1(c);
-                }
-                else
-                {
+                } else {
                     break;
                 }
-            }
-            else
-            {
+            } else {
                 startTokenizeV1(c);
             }
         }

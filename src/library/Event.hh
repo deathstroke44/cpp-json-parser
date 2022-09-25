@@ -1,10 +1,12 @@
 #ifndef EVENT_HH__
 #define EVENT_HH__
+
 #include <string>
 #include<bits/stdc++.h>
+
 using namespace std;
 
-enum TokenType{
+enum TokenType {
     OPERATOR_TOKEN,
     STRING_TOKEN,
     NUMBER_TOKEN,
@@ -12,7 +14,7 @@ enum TokenType{
     FLOAT_TOKEN,
     INTEGER_TOKEN,
     BOOLEAN_TOKEN,
-    NULL_TOKEN    
+    NULL_TOKEN
 };
 
 enum JsonEventType {
@@ -26,12 +28,18 @@ enum JsonEventType {
 };
 
 class StreamToken {
-  public:
+public:
     JsonEventType tokenType;
     bool isDefault = true;
     bool isStringValue = false;
     string value;
-    StreamToken(JsonEventType  _token_type, string _value, bool _isStringValue = false) : tokenType(_token_type), value(_value), isDefault(false), isStringValue(_isStringValue) {};
+
+    StreamToken(JsonEventType _token_type, string _value, bool _isStringValue = false) : tokenType(_token_type),
+                                                                                         value(_value),
+                                                                                         isDefault(false),
+                                                                                         isStringValue(
+                                                                                                 _isStringValue) {};
+
     StreamToken() = default;
 
 };
@@ -48,18 +56,23 @@ class StreamToken {
   Unfortunately, I have no idea how to enforce the existence of this attribute.
 */
 
-template <typename T>
-class JsonStreamEvent{
+template<typename T>
+class JsonStreamEvent {
 protected:
-  T _type;
-  StreamToken stream_token;
-  bool _handled = false;
+    T _type;
+    StreamToken stream_token;
+    bool _handled = false;
 public:
-  JsonStreamEvent() = default;
-  JsonStreamEvent(T type, const StreamToken& name) : _type(type), stream_token(name){};
-  inline const string type() const { return _type;};
-  inline const StreamToken& getStreamToken() const { return stream_token;};
-  virtual bool isHandled(){ return _handled;};
+    JsonStreamEvent() = default;
+
+    JsonStreamEvent(T type, const StreamToken &name) : _type(type), stream_token(name) {};
+
+    inline const string type() const { return _type; };
+
+    inline const StreamToken &getStreamToken() const { return stream_token; };
+
+    virtual bool isHandled() { return _handled; };
 private:
 };
+
 #endif
