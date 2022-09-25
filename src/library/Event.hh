@@ -9,7 +9,6 @@ using namespace std;
 enum TokenType {
     OPERATOR_TOKEN,
     STRING_TOKEN,
-    NUMBER_TOKEN,
     EXP_TOKEN,
     FLOAT_TOKEN,
     INTEGER_TOKEN,

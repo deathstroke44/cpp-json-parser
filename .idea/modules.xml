@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/json-streamer-c++.iml" filepath="$PROJECT_DIR$/.idea/json-streamer-c++.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/json-streamer-cpp.iml" filepath="$PROJECT_DIR$/.idea/json-streamer-cpp.iml" />
     </modules>
   </component>
 </project>
