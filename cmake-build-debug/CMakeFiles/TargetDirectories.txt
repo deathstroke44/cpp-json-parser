@@ -1,3 +1,0 @@
-/home/saminyeaser/CLionProjects/json-streamer-cpp/cmake-build-debug/CMakeFiles/json_streamer_cpp.dir
-/home/saminyeaser/CLionProjects/json-streamer-cpp/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/saminyeaser/CLionProjects/json-streamer-cpp/cmake-build-debug/CMakeFiles/rebuild_cache.dir
