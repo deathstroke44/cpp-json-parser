@@ -55,46 +55,46 @@ public:
     }
 
     void emitEvent(int eventType, string value) {
-        JsonEventType _JsonEventType;
+        JsonEventType jsonEventType;
         bool isStringValue = false;
         string _value;
         if (eventType == 0) {
-            _JsonEventType = JsonEventType::VALUE_TOKEN;
+            jsonEventType = JsonEventType::VALUE_TOKEN;
             isStringValue = true;
             _value = value;
         } else if (eventType == 2) {
-            _JsonEventType = KEY_TOKEN;
+            jsonEventType = KEY_TOKEN;
             _value = value;
         } else if (eventType == 3) {
-            _JsonEventType = LIST_STARTED_TOKEN;
+            jsonEventType = LIST_STARTED_TOKEN;
             _value = "list started";
         } else if (eventType == 4) {
-            _JsonEventType = LIST_ENDED_TOKEN;
+            jsonEventType = LIST_ENDED_TOKEN;
             _value = "list ended";
         } else if (eventType == 6) {
-            _JsonEventType = OBJECT_STARTED_TOKEN;
+            jsonEventType = OBJECT_STARTED_TOKEN;
             _value = "object started";
         } else if (eventType == 7) {
-            _JsonEventType = OBJECT_ENDED_TOKEN;
+            jsonEventType = OBJECT_ENDED_TOKEN;
             _value = "object ended";
         } else if (eventType == 8) {
-            _JsonEventType = JsonEventType::VALUE_TOKEN;
+            jsonEventType = JsonEventType::VALUE_TOKEN;
             _value = value;
         } else if (eventType == 9) {
-            _JsonEventType = VALUE_TOKEN;
+            jsonEventType = VALUE_TOKEN;
             _value = value;
         } else if (eventType == 10) {
-            _JsonEventType = VALUE_TOKEN;
+            jsonEventType = VALUE_TOKEN;
             _value = value;
         } else if (eventType == 11) {
-            _JsonEventType = VALUE_TOKEN;
+            jsonEventType = VALUE_TOKEN;
             _value = value;
         } else if (eventType == 12) {
-            _JsonEventType = VALUE_TOKEN;
+            jsonEventType = VALUE_TOKEN;
             _value = value;
         }
         if (eventType == 0 || (eventType >= 2 && eventType <= 12)) {
-            JsonStreamEvent jsonStreamEvent(topicName, StreamToken(_JsonEventType, _value, isStringValue));
+            JsonStreamEvent jsonStreamEvent(topicName, StreamToken(jsonEventType, _value, isStringValue));
             eventDispatcher.post(jsonStreamEvent);
         }
     }
@@ -368,6 +368,7 @@ public:
                 if (charList1[ch] == c) {
                     tokens.push_back(charList2[ch]);
                     addChar = false;
+                    matched = true;
                 }
             }
             if (c == 'u' && !matched) {
@@ -379,7 +380,6 @@ public:
                 isCompleted = true;
                 latestToken = make_pair(STRING_TOKEN, mergeTokens());
                 nextState = STRING_END_STATE;
-                // cout<<"Debug 1:"<< mergeTokens()<<endl;
             } else if (c == '\\') {
                 nextState = STRING_ESCAPE_STATE;
             } else {
@@ -419,25 +419,24 @@ public:
         addChar = false;
         nextState = state;
 
-        {
-            if (state == WHITESPACE_STATE) {
-                handleWhitespaceState(c, charCode);
-            } else if (state == INTEGER_0_STATE || state == INTEGER_SIGN_STATE || state == INTEGER_STATE ||
-                       state == INTEGER_EXP_STATE || state == INTEGER_EXP_0_STATE) {
-                handleIntegerState(c, charCode);
-            } else if (state == FLOATING_POINT_0_STATE || state == FLOATING_POINT_STATE) {
-                handleFloatState(c, charCode);
-            } else if (state == TRUE_1_STATE || state == TRUE_2_STATE || state == TRUE_3_STATE) {
-                handleTrueState(c, charCode);
-            } else if (state == FALSE_1_STATE || state == FALSE_2_STATE || state == FALSE_3_STATE ||
-                       state == FALSE_4_STATE) {
-                handleFalseState(c, charCode);
-            } else if (state == NULL_1_STATE || state == NULL_2_STATE || state == NULL_3_STATE) {
-                handleNullState(c, charCode);
-            } else {
-                handleStringState(c, charCode);
-            }
+        if (state == WHITESPACE_STATE) {
+            handleWhitespaceState(c, charCode);
+        } else if (state == INTEGER_0_STATE || state == INTEGER_SIGN_STATE || state == INTEGER_STATE ||
+                   state == INTEGER_EXP_STATE || state == INTEGER_EXP_0_STATE) {
+            handleIntegerState(c, charCode);
+        } else if (state == FLOATING_POINT_0_STATE || state == FLOATING_POINT_STATE) {
+            handleFloatState(c, charCode);
+        } else if (state == TRUE_1_STATE || state == TRUE_2_STATE || state == TRUE_3_STATE) {
+            handleTrueState(c, charCode);
+        } else if (state == FALSE_1_STATE || state == FALSE_2_STATE || state == FALSE_3_STATE ||
+                   state == FALSE_4_STATE) {
+            handleFalseState(c, charCode);
+        } else if (state == NULL_1_STATE || state == NULL_2_STATE || state == NULL_3_STATE) {
+            handleNullState(c, charCode);
+        } else {
+            handleStringState(c, charCode);
         }
+
         if (addChar) {
             string s;
             s.push_back(c);
@@ -445,7 +444,7 @@ public:
         }
     }
 
-    void startTokenizeV1(char &c) {
+    void startTokenize(char &c) {
         processSingleCharacter(c, charCode);
         state = nextState;
         if (isCompleted) {
@@ -468,12 +467,12 @@ public:
         while (!stopEmittingEvent) {
             if (shouldAdvance) {
                 if (fs >> c) {
-                    startTokenizeV1(c);
+                    startTokenize(c);
                 } else {
                     break;
                 }
             } else {
-                startTokenizeV1(c);
+                startTokenize(c);
             }
         }
         JsonStreamEvent jsonStreamEvent(topicName, StreamToken(JsonEventType::DOCUMENT_END_TOKEN, ""));
