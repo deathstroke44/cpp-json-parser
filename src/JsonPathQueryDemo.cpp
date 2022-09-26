@@ -1,4 +1,4 @@
-#include "library/json-streaming.hh"
+#include "library/JsonStreaming.hh"
 
 using namespace std;
 
@@ -29,6 +29,9 @@ vector<string> traversingListOrObjectStack;
   for this case $.bookstore.info and $.superstore.info keys value will be stored in separate keys in this map
  */
 map<string, string> jsonPathQueryResultsMap;
+/**
+ * STL map don't keep key insertion order. This list keeps track of jsonPath insertion order
+ */
 vector<string> jsonPathQueryResultKeys;
 map<string, StreamToken> jsonPathQueryResultsLastAddedTokenMap;
 /**

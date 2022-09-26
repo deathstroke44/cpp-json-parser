@@ -3,7 +3,7 @@
 
 #include <string>
 #include<bits/stdc++.h>
-#include "Custom-data-types.hh"
+#include "CustomDataTypes.hh"
 
 using namespace std;
 
