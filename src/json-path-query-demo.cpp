@@ -23,7 +23,7 @@ public:
 };
 
 
-void displayJsonPathQueryResult(string &finalResult);
+string getJsonPathQueryResult();
 
 bool isThisKeyNotSatisfyQuery(const KeyClass &currentKey, const KeyClass &jsonPathQueryKey);
 
@@ -230,17 +230,19 @@ void setCurrentlyTraversingListOrObject(const string &value) {
 void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent) {
     currentEvent = jsonStreamEvent;
     StreamToken streamToken = jsonStreamEvent.getStreamToken();
+
+    if (streamToken.tokenType == DOCUMENT_END_TOKEN) {
+        getJsonPathQueryResult();
+        return;
+    }
+
     bool ignoreEventFlag = false;
     bool shouldAddThisEvent = false;
     bool previousKeyValid = currentJsonPathMatchJsonPathQuery();
     string previousKey = getCurrentJsonPath();
-    string finalResult;
 
     processStreamEvent(streamToken, ignoreEventFlag, shouldAddThisEvent);
     addToJsonPathQueryResultIfNeeded(streamToken, ignoreEventFlag, shouldAddThisEvent, previousKeyValid, previousKey);
-    if (streamToken.tokenType == DOCUMENT_END_TOKEN) {
-        displayJsonPathQueryResult(finalResult);
-    }
 }
 
 void addToJsonPathQueryResultIfNeeded(const StreamToken &streamToken, bool ignoreEventFlag, bool shouldAddThisEvent,
@@ -282,10 +284,11 @@ void processStreamEvent(StreamToken &streamToken, bool &ignoreEventFlag, bool &s
     }
 }
 
-void displayJsonPathQueryResult(string &finalResult) {
+string getJsonPathQueryResult() {
+    string finalResult;
     for (const auto &jsonPath: jsonPathQueryResultKeys) {
         string jsonPathValue = jsonPathQueryResultsMap[jsonPath];
-//        cout << "All answers: " << jsonPath << " -> " << jsonPathValue << endl;
+        cout << "All answers: " << jsonPath << " -> " << jsonPathValue << endl;
         if (finalResult.length()) {
             finalResult.push_back(',');
         }
@@ -299,6 +302,7 @@ void displayJsonPathQueryResult(string &finalResult) {
 //     if (finalResult.length()) {
 //       cout<<finalResult<<","<<endl;
 //     }
+    return finalResult;
 }
 
 void addKeyToJsonPathQueryProcessedList(bool listIndex, string val) {
