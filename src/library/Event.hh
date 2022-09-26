@@ -3,45 +3,10 @@
 
 #include <string>
 #include<bits/stdc++.h>
+#include "Custom-data-types.hh"
 
 using namespace std;
 
-enum TokenType {
-    OPERATOR_TOKEN,
-    STRING_TOKEN,
-    EXP_TOKEN,
-    FLOAT_TOKEN,
-    INTEGER_TOKEN,
-    BOOLEAN_TOKEN,
-    NULL_TOKEN
-};
-
-enum JsonEventType {
-    KEY_TOKEN,
-    OBJECT_STARTED_TOKEN,
-    OBJECT_ENDED_TOKEN,
-    LIST_STARTED_TOKEN,
-    LIST_ENDED_TOKEN,
-    DOCUMENT_END_TOKEN,
-    VALUE_TOKEN,
-};
-
-class StreamToken {
-public:
-    JsonEventType tokenType;
-    bool isDefault = true;
-    bool isStringValue = false;
-    string value;
-
-    StreamToken(JsonEventType _token_type, string _value, bool _isStringValue = false) : tokenType(_token_type),
-                                                                                         value(_value),
-                                                                                         isDefault(false),
-                                                                                         isStringValue(
-                                                                                                 _isStringValue) {};
-
-    StreamToken() = default;
-
-};
 
 /**
   @class Event

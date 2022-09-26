@@ -2,26 +2,6 @@
 
 using namespace std;
 
-class JsonPathKey {
-public:
-    bool isStringKey = false, anyIndex = false, anyKey = false;
-    int index;
-    string key;
-
-    JsonPathKey() = default;
-
-    explicit JsonPathKey(int index) {
-        this->index = index;
-        anyIndex = (index == -2);
-    };
-
-    JsonPathKey(string key, bool dummy) {
-        this->key = key;
-        isStringKey = true;
-        anyKey = (key.length() == 0 || key == "*");
-    };
-};
-
 
 string getJsonPathQueryResult();
 
@@ -59,9 +39,7 @@ bool multiResultExist = false;
 
 string getCurrentJsonPath() {
     string jsonPath;
-    int jsonPathQueryLen = jsonPathQueryTokenized.size();
-    int currentTraversedPathKeysStackLen = currentJsonPathStack.size();
-    for (int i = 0; i < jsonPathQueryLen && i < currentTraversedPathKeysStackLen; i++) {
+    for (int i = 0; i < jsonPathQueryTokenized.size() && i < currentJsonPathStack.size(); i++) {
         JsonPathKey jsonPathKey = currentJsonPathStack[i];
         string appendingString = getAppendingString(jsonPathKey);
         jsonPath = jsonPath.append(appendingString);
@@ -69,8 +47,7 @@ string getCurrentJsonPath() {
     return jsonPath;
 }
 
-string getAppendingString(const JsonPathKey &jsonPathKey)
-{
+string getAppendingString(const JsonPathKey &jsonPathKey) {
     return !jsonPathKey.isStringKey ? "[" + to_string(jsonPathKey.index) + "]" : "." + jsonPathKey.key;
 }
 

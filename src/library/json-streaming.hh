@@ -3,47 +3,19 @@
 #include "Event.hh"
 
 using namespace std;
-typedef long long int li;
 
-enum StateEnum {
-    WHITESPACE_STATE,
-    INTEGER_STATE,
-    INTEGER_SIGN_STATE,
-    INTEGER_0_STATE,
-    INTEGER_EXP_STATE,
-    INTEGER_EXP_0_STATE,
-    FLOATING_POINT_0_STATE,
-    FLOATING_POINT_STATE,
-    STRING_STATE,
-    STRING_ESCAPE_STATE,
-    STRING_END_STATE,
-    TRUE_1_STATE,
-    TRUE_2_STATE,
-    TRUE_3_STATE,
-    FALSE_1_STATE,
-    FALSE_2_STATE,
-    FALSE_3_STATE,
-    FALSE_4_STATE,
-    NULL_1_STATE,
-    NULL_2_STATE,
-    NULL_3_STATE,
-    UNICODE_1_STATE,
-    UNICODE_2_STATE,
-    UNICODE_3_STATE,
-    UNICODE_4_STATE
-};
 
 class JsonStreamParser {
-    vector <string> tokens;
+    vector<string> tokens;
     bool isCompleted = false;
     int charCode = 0;
     StateEnum state = WHITESPACE_STATE;
     bool shouldAdvance = true;
     bool addChar = false;
     StateEnum nextState = WHITESPACE_STATE;
-    pair <TokenType, string> previousToken;
+    pair<TokenType, string> previousToken;
     bool previousTokenUnProcessed = false;
-    pair <TokenType, string> latestToken = make_pair(NULL_TOKEN, "");
+    pair<TokenType, string> latestToken = make_pair(NULL_TOKEN, "");
 
 public:
     Dispatcher<string> eventDispatcher = Dispatcher<string>();
@@ -54,56 +26,17 @@ public:
         eventDispatcher.subscribe(topicName, func);
     }
 
-    void emitEvent(int eventType, string value) {
-        JsonEventType jsonEventType;
-        bool isStringValue = false;
-        string _value;
-        if (eventType == 0) {
-            jsonEventType = JsonEventType::VALUE_TOKEN;
-            isStringValue = true;
-            _value = value;
-        } else if (eventType == 2) {
-            jsonEventType = KEY_TOKEN;
-            _value = value;
-        } else if (eventType == 3) {
-            jsonEventType = LIST_STARTED_TOKEN;
-            _value = "list started";
-        } else if (eventType == 4) {
-            jsonEventType = LIST_ENDED_TOKEN;
-            _value = "list ended";
-        } else if (eventType == 6) {
-            jsonEventType = OBJECT_STARTED_TOKEN;
-            _value = "object started";
-        } else if (eventType == 7) {
-            jsonEventType = OBJECT_ENDED_TOKEN;
-            _value = "object ended";
-        } else if (eventType == 8) {
-            jsonEventType = JsonEventType::VALUE_TOKEN;
-            _value = value;
-        } else if (eventType == 9) {
-            jsonEventType = VALUE_TOKEN;
-            _value = value;
-        } else if (eventType == 10) {
-            jsonEventType = VALUE_TOKEN;
-            _value = value;
-        } else if (eventType == 11) {
-            jsonEventType = VALUE_TOKEN;
-            _value = value;
-        } else if (eventType == 12) {
-            jsonEventType = VALUE_TOKEN;
-            _value = value;
-        }
-        if (eventType == 0 || (eventType >= 2 && eventType <= 12)) {
-            JsonStreamEvent jsonStreamEvent(topicName, StreamToken(jsonEventType, _value, isStringValue));
-            eventDispatcher.post(jsonStreamEvent);
-        }
+    void emitEvent(JsonEventType jsonEventType, string value, bool isStringValue = false) {
+        JsonStreamEvent jsonStreamEvent(topicName, StreamToken(jsonEventType, value, isStringValue));
+        eventDispatcher.post(jsonStreamEvent);
     }
 
-    void processPreviousToken(pair <TokenType, string> previousToken, pair <TokenType, string> currentToken) {
-        currentToken.second == ":" ? emitEvent(2, previousToken.second) : emitEvent(0, previousToken.second);
+    void processPreviousToken(pair<TokenType, string> previousToken, pair<TokenType, string> currentToken) {
+        currentToken.second == ":" ? emitEvent(KEY_TOKEN, previousToken.second)
+                                   : emitEvent(VALUE_TOKEN, previousToken.second, true);
     }
 
-    void streamToken(pair <TokenType, string> token) {
+    void streamToken(pair<TokenType, string> token) {
         if (previousTokenUnProcessed) {
             processPreviousToken(previousToken, token);
         }
@@ -113,37 +46,30 @@ public:
         previousToken = token;
         if (tokenType == OPERATOR_TOKEN) {
             if (tokenValue == "[") {
-                emitEvent(3, "list");
+                emitEvent(LIST_STARTED_TOKEN, "list");
             } else if (tokenValue == "]") {
-                emitEvent(4, "list");
+                emitEvent(LIST_ENDED_TOKEN, "list");
             } else if (tokenValue == "}") {
-                emitEvent(7, "object");
+                emitEvent(OBJECT_ENDED_TOKEN, "object");
             } else if (tokenValue == "{") {
-                emitEvent(6, "object");
+                emitEvent(OBJECT_STARTED_TOKEN, "object");
             }
         } else if (tokenType == STRING_TOKEN) {
             previousTokenUnProcessed = true;
             return;
-        } else if (tokenType == INTEGER_TOKEN) {
-            emitEvent(8, tokenValue);
-        } else if (tokenType == FLOAT_TOKEN) {
-            emitEvent(9, tokenValue);
-        } else if (tokenType == EXP_TOKEN) {
-            emitEvent(11, tokenValue);
-        } else if (tokenType == BOOLEAN_TOKEN) {
-            emitEvent(10, tokenValue);
-        } else if (tokenType == NULL_TOKEN) {
-            emitEvent(12, tokenValue);
+        } else if (tokenType == INTEGER_TOKEN || tokenType == FLOAT_TOKEN || tokenType == EXP_TOKEN
+                   || tokenType == BOOLEAN_TOKEN || tokenType == NULL_TOKEN) {
+            emitEvent(VALUE_TOKEN, tokenValue);
         }
     }
 
-    void processNewToken(pair <TokenType, string> token) {
+    void processNewToken(pair<TokenType, string> token) {
         streamToken(token);
     }
 
     string mergeTokens() {
         string str;
-        for (auto & token : tokens) {
+        for (auto &token: tokens) {
             str.append(token);
         }
         return str;
@@ -163,7 +89,7 @@ public:
 
     void handleWhitespaceState(char &c, int &char_code) {
         vector<char> common_cases = {'{', '}', '[', ']', ',', ':'};
-        for (char & common_case : common_cases) {
+        for (char &common_case: common_cases) {
             if (common_case == c) {
                 string s;
                 s.push_back(c);
@@ -362,7 +288,7 @@ public:
 
             nextState = STRING_STATE;
             vector<char> charList1 = {'b', 'f', 'n', 't', 'r', '/', '\\', '\"'};
-            vector <string> charList2 = {"\b", "\f", "\n", "\t", "\r", "/", "\\", "\""};
+            vector<string> charList2 = {"\b", "\f", "\n", "\t", "\r", "/", "\\", "\""};
             bool matched = false;
             for (int ch = 0; ch < charList1.size(); ch++) {
                 if (charList1[ch] == c) {
@@ -454,7 +380,7 @@ public:
         }
     }
 
-    void startJsonStreaming(const string& fileName) {
+    void startJsonStreaming(const string &fileName) {
         tokens.clear();
         isCompleted = false;
         charCode = 0;
