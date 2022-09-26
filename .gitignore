@@ -26,3 +26,4 @@ npm-debug.log*
 /coverage
 /cmake-build-debug
 /src/output.txt
+/src/a.out
