@@ -32,6 +32,8 @@ void processStreamEvent(StreamToken &streamToken, bool &ignoreEventFlag, bool &s
 void addToJsonPathQueryResultIfNeeded(const StreamToken &streamToken, bool ignoreEventFlag, bool shouldAddThisEvent,
                                       bool previousKeyValid, string &previousKey);
 
+void initStates(string &jsonPathQuery);
+
 vector<KeyClass> traversingPathKeysStack;
 /**
  * Currently, I am processing a value token that can be an immediate part of a list/object. this stack maintains this information
@@ -47,7 +49,6 @@ vector<string> traversingInListOrObjectStack;
 map<string, string> jsonPathQueryResultsMap;
 vector<string> jsonPathQueryResultKeys;
 map<string, StreamToken> jsonPathQueryResultsLastAddedTokenMap;
-JsonStreamEvent<string> currentEvent;
 /**
  * Processed tokenized version of json path query
  */
@@ -119,38 +120,32 @@ void addTokenInCurrentJsonPathResult(const StreamToken &streamToken, const strin
     bool isNewKey = jsonPathQueryResultsLastAddedTokenMap[currentKey].isDefault;
     resultInCurrentPath.append(appendingDelimiterNeededBefore(streamToken, currentKey) ? "," : "");
     jsonPathQueryResultsLastAddedTokenMap[currentKey] = streamToken;
-    bool isTokenAdded = true;
 
     if (streamToken.tokenType == JsonEventType::KEY_TOKEN) {
         resultInCurrentPath += "\"" + streamToken.value + "\"" + " : ";
-    }
-    if (streamToken.tokenType == VALUE_TOKEN) {
+    } else if (streamToken.tokenType == VALUE_TOKEN) {
         resultInCurrentPath.append(streamToken.isStringValue
                                    ? "\"" + streamToken.value + "\""
                                    : streamToken.value);
-    }
-    if (streamToken.tokenType == LIST_STARTED_TOKEN) {
+    } else if (streamToken.tokenType == LIST_STARTED_TOKEN) {
         resultInCurrentPath.push_back('[');
-    }
-    if (streamToken.tokenType == LIST_ENDED_TOKEN
-        && (!currentKeyNotValid || (traversingPathKeysStack.size() + 1 == jsonPathQueryTokenized.size()
-                                    && jsonPathQueryTokenized[jsonPathQueryTokenized.size() - 1].isStringKey))) {
-        resultInCurrentPath.push_back(']');
     } else if (streamToken.tokenType == LIST_ENDED_TOKEN) {
-        isTokenAdded = false;
-    }
-    if (streamToken.tokenType == OBJECT_STARTED_TOKEN) {
+        if ((!currentKeyNotValid || (traversingPathKeysStack.size() + 1 == jsonPathQueryTokenized.size()
+                                     && jsonPathQueryTokenized[jsonPathQueryTokenized.size() - 1].isStringKey))) {
+            resultInCurrentPath.push_back(']');
+        } else {
+            return;
+        }
+
+    } else if (streamToken.tokenType == OBJECT_STARTED_TOKEN) {
         resultInCurrentPath.push_back('{');
-    }
-    if (streamToken.tokenType == OBJECT_ENDED_TOKEN) {
+    } else if (streamToken.tokenType == OBJECT_ENDED_TOKEN) {
         resultInCurrentPath.push_back('}');
     }
-    if (isTokenAdded) {
-        if (isNewKey) {
-            jsonPathQueryResultKeys.push_back(currentKey);
-        }
-        jsonPathQueryResultsMap[currentKey] = resultInCurrentPath;
+    if (isNewKey) {
+        jsonPathQueryResultKeys.push_back(currentKey);
     }
+    jsonPathQueryResultsMap[currentKey] = resultInCurrentPath;
 }
 
 bool currentJsonPathMatchJsonPathQuery() {
@@ -228,7 +223,6 @@ void setCurrentlyTraversingListOrObject(const string &value) {
 }
 
 void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent) {
-    currentEvent = jsonStreamEvent;
     StreamToken streamToken = jsonStreamEvent.getStreamToken();
 
     if (streamToken.tokenType == DOCUMENT_END_TOKEN) {
@@ -349,6 +343,12 @@ void processJsonPathQuery(string jsonPathQuery) {
     }
 }
 
+void initStates(string &jsonPathQuery) {
+    KeyClass keyClass("$", true);
+    traversingPathKeysStack.push_back(keyClass);
+    processJsonPathQuery(jsonPathQuery);
+}
+
 int main(int argc, char **argv) {
     freopen("output.txt", "a+", stdout);
     JsonStreamParser jsonStreamParser = JsonStreamParser();
@@ -356,9 +356,7 @@ int main(int argc, char **argv) {
     string jsonPathQuery(argv[2]);
     cout << "JSON path query:" << jsonPathQuery << " -filename: " << fileName << endl;
     fileName = "tests/Json files/" + fileName;
-    KeyClass keyClass("$", true);
-    traversingPathKeysStack.push_back(keyClass);
-    processJsonPathQuery(jsonPathQuery);
+    initStates(jsonPathQuery);
     jsonStreamParser.setEventHandler(handleJsonStreamParserEvent);
     jsonStreamParser.startJsonStreaming(fileName);
 }
