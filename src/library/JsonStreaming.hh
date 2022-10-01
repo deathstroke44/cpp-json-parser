@@ -26,7 +26,7 @@ public:
         eventDispatcher.subscribe(topicName, func);
     }
 
-    void emitEvent(JsonEventType jsonEventType, string value, bool isStringValue = false) {
+    void emitEvent(JsonTokenType jsonEventType, string value, bool isStringValue = false) {
         JsonStreamEvent jsonStreamEvent(topicName, StreamToken(jsonEventType, value, isStringValue));
         eventDispatcher.post(jsonStreamEvent);
     }
@@ -401,7 +401,7 @@ public:
                 startTokenize(c);
             }
         }
-        JsonStreamEvent jsonStreamEvent(topicName, StreamToken(JsonEventType::DOCUMENT_END_TOKEN, ""));
+        JsonStreamEvent jsonStreamEvent(topicName, StreamToken(JsonTokenType::DOCUMENT_END_TOKEN, ""));
         eventDispatcher.post(jsonStreamEvent);
     }
 };

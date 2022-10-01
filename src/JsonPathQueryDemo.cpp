@@ -108,7 +108,7 @@ void addTokenInCurrentJsonPathResult(const StreamToken &streamToken, const strin
     resultInCurrentPath.append(appendingDelimiterNeededBefore(streamToken, currentKey) ? "," : "");
     jsonPathQueryResultsLastAddedTokenMap[currentKey] = streamToken;
 
-    if (streamToken.tokenType == JsonEventType::KEY_TOKEN) {
+    if (streamToken.tokenType == JsonTokenType::KEY_TOKEN) {
         resultInCurrentPath += "\"" + streamToken.value + "\"" + " : ";
     } else if (streamToken.tokenType == VALUE_TOKEN) {
         resultInCurrentPath.append(streamToken.isStringValue

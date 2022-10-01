@@ -40,7 +40,7 @@ enum TokenType {
     NULL_TOKEN
 };
 
-enum JsonEventType {
+enum JsonTokenType {
     KEY_TOKEN,
     OBJECT_STARTED_TOKEN,
     OBJECT_ENDED_TOKEN,
@@ -52,12 +52,12 @@ enum JsonEventType {
 
 class StreamToken {
 public:
-    JsonEventType tokenType;
+    JsonTokenType tokenType;
     bool isDefault = true;
     bool isStringValue = false;
     string value;
 
-    StreamToken(JsonEventType _token_type, string _value, bool _isStringValue = false) : tokenType(_token_type),
+    StreamToken(JsonTokenType _token_type, string _value, bool _isStringValue = false) : tokenType(_token_type),
                                                                                          value(_value),
                                                                                          isDefault(false),
                                                                                          isStringValue(
