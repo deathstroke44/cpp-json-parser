@@ -101,8 +101,7 @@ bool appendingDelimiterNeededBefore(const StreamToken &streamToken, const string
  * @param currentKey
  * @param currentKeyNotValid
  */
-void addTokenInCurrentJsonPathResult(const StreamToken &streamToken, const string &currentKey,
-                                     bool currentKeyNotValid = false) {
+void addTokenInCurrentJsonPathResult(const StreamToken &streamToken, const string &currentKey) {
     string resultInCurrentPath = jsonPathQueryResultsMap[currentKey];
     bool isNewKey = jsonPathQueryResultsLastAddedTokenMap[currentKey].isDefault;
     resultInCurrentPath.append(appendingDelimiterNeededBefore(streamToken, currentKey) ? "," : "");
@@ -117,12 +116,7 @@ void addTokenInCurrentJsonPathResult(const StreamToken &streamToken, const strin
     } else if (streamToken.tokenType == LIST_STARTED_TOKEN) {
         resultInCurrentPath.push_back('[');
     } else if (streamToken.tokenType == LIST_ENDED_TOKEN) {
-        if ((!currentKeyNotValid || (currentJsonPathStack.size() + 1 == jsonPathQueryTokenized.size()
-                                     && jsonPathQueryTokenized[jsonPathQueryTokenized.size() - 1].isStringKey))) {
-            resultInCurrentPath.push_back(']');
-        } else {
-            return;
-        }
+        resultInCurrentPath.push_back(']');
 
     } else if (streamToken.tokenType == OBJECT_STARTED_TOKEN) {
         resultInCurrentPath.push_back('{');
@@ -179,8 +173,16 @@ string getCurrentTokenIsPartOfObjectOrList() {
            traversingListOrObjectStack[traversingListOrObjectStack.size() - 1];
 }
 
+bool isCurrentTokenIsPartOfObject() {
+    return getCurrentTokenIsPartOfObjectOrList() == "object";
+}
+
+bool isCurrentTokenIsPartOfList() {
+    return getCurrentTokenIsPartOfObjectOrList() == "list";
+}
+
 void handleNewListStarted() {
-    if (getCurrentTokenIsPartOfObjectOrList() == "list" && isLastKeyOfCurrentPathIndex())
+    if (isCurrentTokenIsPartOfList() && isLastKeyOfCurrentPathIndex())
         IncrementIndexInCurrentJsonPathStack();
     currentJsonPathStack.emplace_back(-1);
 }
@@ -189,18 +191,18 @@ void handleListEnded() {
     popCurrentlyTraversingInListOrObjectStack();
     if (isLastKeyOfCurrentPathIndex())
         popCurrentJsonPathStack();
-    if (getCurrentTokenIsPartOfObjectOrList() == "object")
+    if (isCurrentTokenIsPartOfObject())
         popCurrentJsonPathStack();
 }
 
 void handleObjectEnded() {
     popCurrentlyTraversingInListOrObjectStack();
-    if (getCurrentTokenIsPartOfObjectOrList() == "object")
+    if (isCurrentTokenIsPartOfObject())
         popCurrentJsonPathStack();
 }
 
 void handleNewValueAddedInList() {
-    if (getCurrentTokenIsPartOfObjectOrList() == "list" && isLastKeyOfCurrentPathIndex()) {
+    if (isCurrentTokenIsPartOfList() && isLastKeyOfCurrentPathIndex()) {
         IncrementIndexInCurrentJsonPathStack();
     }
 }
@@ -233,7 +235,7 @@ void addToJsonPathQueryResultIfNeeded(const StreamToken &streamToken, bool ignor
         string currentKey = getCurrentJsonPath();
         addTokenInCurrentJsonPathResult(streamToken, currentKey + "");
     } else if (!currentKeyMatched && shouldAddThisEvent && previousKeyValid) {
-        addTokenInCurrentJsonPathResult(streamToken, previousKey, !currentKeyMatched);
+        addTokenInCurrentJsonPathResult(streamToken, previousKey);
     }
 }
 
@@ -242,10 +244,10 @@ void processStreamEvent(StreamToken &streamToken, bool &ignoreEventFlag, bool &s
         ignoreEventFlag = ignoreEventFlag || !currentJsonPathMatchJsonPathQuery();
         currentJsonPathStack.emplace_back(streamToken.value, true);
     } else if (streamToken.tokenType == VALUE_TOKEN) {
-        if (getCurrentTokenIsPartOfObjectOrList() == "object") {
+        if (isCurrentTokenIsPartOfObject()) {
             popCurrentJsonPathStack();
             shouldAddThisEvent = true;
-        } else if (getCurrentTokenIsPartOfObjectOrList() == "list") {
+        } else if (isCurrentTokenIsPartOfList()) {
             handleNewValueAddedInList();
         }
     } else if (streamToken.tokenType == LIST_STARTED_TOKEN) {
@@ -253,9 +255,10 @@ void processStreamEvent(StreamToken &streamToken, bool &ignoreEventFlag, bool &s
         setCurrentlyTraversingListOrObject("list");
     } else if (streamToken.tokenType == LIST_ENDED_TOKEN) {
         handleListEnded();
-        shouldAddThisEvent = true;
+        shouldAddThisEvent = (currentJsonPathStack.size() + 1 == jsonPathQueryTokenized.size()
+                              && jsonPathQueryTokenized[jsonPathQueryTokenized.size() - 1].isStringKey);
     } else if (streamToken.tokenType == OBJECT_STARTED_TOKEN) {
-        if (getCurrentTokenIsPartOfObjectOrList() == "list") {
+        if (isCurrentTokenIsPartOfList()) {
             handleNewValueAddedInList();
         }
         setCurrentlyTraversingListOrObject("object");
