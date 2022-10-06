@@ -2,55 +2,55 @@ PROCESS-RESULT():
     result = AppendResultsByCommaSeparators()
     if multipleResultQuery:
         result = "[" + result + "]"
-    RETURN result
+    return result
 
 UPDATE-RESULT(streamToken, key):
     resultUpToNowForThisKey = jsonPathQueryResultKeys.get(key)
     lastAddedToken = jsonPathQueryResultsLastAddedTokenMap.get(key)
-    IF appendingDelimiterNeeded(streamToken, lastAddedToken):
+    if appendingDelimiterNeeded(streamToken, lastAddedToken):
         lastAddedToken.append(",")
     lastAddedToken.append(getProcessedValue(streamToken));
 
 UPDATE-RESULT-IF-NEEDED(streamToken, ignoreEventFlag, shouldAddThisEvent, previousKeySatisfy, previousKey):
     currentKeySatisfy = isCurrentJsonPathMatchJsonPathQuery();
-    IF currentKeyMatched and not ignoreEventFlag:
+    if currentKeyMatched and not ignoreEventFlag:
         currentKey = getCurrentJsonPathUptoQueryLength()
         UPDATE-RESULT(streamToken, currentKey)
-    ELSE IF (not currentKeySatisfy and shouldAddThisEvent and previousKeySatisfy)
+    else if (not currentKeySatisfy and shouldAddThisEvent and previousKeySatisfy)
         UPDATE-RESULT(streamToken, previousKey)
 
 PROCESS-STREAM-TOKEN-AND-UPDATE-STATES(streamToken, shouldAddThisEvent, ignoreEventFlag)
-    IF streamToken.type == KEY_TOKEN:
+    if streamToken.type == KEY_TOKEN:
         key=Key(isStringKey=false,index=-streamToken.value)
-        ignoreEventFlag = ignoreEventFlag || !currentJsonPathMatchJsonPathQuery()
+        ignoreEventFlag = ignoreEventFlag  !currentJsonPathMatchJsonPathQuery()
         currentJsonPathStack.push({isStringKey:true, key: streamToken.value})
-    ELSE IF streamToken.type == VALUE_TOKEN:
-        IF PartOfObject:
+    else if streamToken.type == VALUE_TOKEN:
+        if PartOfObject:
             currentJsonPathStack.pop()
             shouldAddThisEvent = true
-        ELSE IF PartOfList:
+        else if PartOfList:
             currentJsonPathStack.top().index++
-    ELSE IF streamToken.type == LIST_STARTED_TOKEN:
+    else if streamToken.type == LIST_STARTED_TOKEN:
         IF PartOfList:
             currentJsonPathStack.top().index++
         currentJsonPathStack.push({isStringKey=false,index=-1})
         traversingListOrObjectStack.push("list")
-    ELSE IF streamToken.type == LIST_ENDED_TOKEN:
+    else if streamToken.type == LIST_ENDED_TOKEN:
         currentJsonPathStack.pop()
-        IF PartOfObject:
+        if PartOfObject:
             currentJsonPathStack.pop()
         shouldAddThisEvent=isCurrentTokenLastCharacterOfKeysValue();
-    ELSE IF streamToken.type == OBJECT_STARTED_TOKEN:
-        IF PartOfList:
+    else if streamToken.type == OBJECT_STARTED_TOKEN:
+        if PartOfList:
             currentJsonPathStack.top().index++
         traversingListOrObjectStack.push("object")
-    ELSE IF streamToken.type == OBJECT_ENDED_TOKEN:
+    else if streamToken.type == OBJECT_ENDED_TOKEN:
         traversingListOrObjectStack.pop()
-        IF PartOfObject:
+        if PartOfObject:
             currentJsonPathStack.pop()
         shouldAddThisEvent=true
 
-handleEvent(streamToken):
+HANDLE-EVENT(streamToken):
     IF streamToken.tokenType == DOCUMENT_END:
         PROCESS-RESULT()
         RETURN
