@@ -1,25 +1,25 @@
-processResult():
+PROCESS-RESULT():
     result = AppendResultsByCommaSeparators()
     if multipleResultQuery:
         result = "[" + result + "]"
     RETURN result
 
-updateResult(streamToken, key):
+UPDATE-RESULT(streamToken, key):
     resultUpToNowForThisKey = jsonPathQueryResultKeys.get(key)
     lastAddedToken = jsonPathQueryResultsLastAddedTokenMap.get(key)
     IF appendingDelimiterNeeded(streamToken, lastAddedToken):
         lastAddedToken.append(",")
     lastAddedToken.append(getProcessedValue(streamToken));
 
-updateResultIfNeeded(streamToken, ignoreEventFlag, shouldAddThisEvent, previousKeySatisfy, previousKey):
+UPDATE-RESULT-IF-NEEDED(streamToken, ignoreEventFlag, shouldAddThisEvent, previousKeySatisfy, previousKey):
     currentKeySatisfy = isCurrentJsonPathMatchJsonPathQuery();
     IF currentKeyMatched and not ignoreEventFlag:
         currentKey = getCurrentJsonPathUptoQueryLength()
-        updateResult(streamToken, currentKey)
+        UPDATE-RESULT(streamToken, currentKey)
     ELSE IF (not currentKeySatisfy and shouldAddThisEvent and previousKeySatisfy)
-        updateResult(streamToken, previousKey)
+        UPDATE-RESULT(streamToken, previousKey)
 
-processStreamTokenAndUpdateStates(streamToken, shouldAddThisEvent, ignoreEventFlag)
+PROCESS-STREAM-TOKEN-AND-UPDATE-STATES(streamToken, shouldAddThisEvent, ignoreEventFlag)
     IF streamToken.type == KEY_TOKEN:
         key=Key(isStringKey=false,index=-streamToken.value)
         ignoreEventFlag = ignoreEventFlag || !currentJsonPathMatchJsonPathQuery()
@@ -56,5 +56,5 @@ handleEvent(streamToken):
         RETURN
     shouldAddThisEvent = ignoreEventFlag = false;
     previousKeySatisfy = isCurrentJsonPathMatchJsonPathQuery();
-    processStreamTokenAndUpdateStates(streamToken, shouldAddThisEvent, ignoreEventFlag);
-    updateResultIfNeeded(streamToken, ignoreEventFlag, shouldAddThisEvent, previousKeySatisfy, previousKey);
+    PROCESS-STREAM-TOKEN-AND-UPDATE-STATES(streamToken, shouldAddThisEvent, ignoreEventFlag);
+    UPDATE-RESULT-IF-NEEDED(streamToken, ignoreEventFlag, shouldAddThisEvent, previousKeySatisfy, previousKey);
