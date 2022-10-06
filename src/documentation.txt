@@ -1,0 +1,224 @@
+State Variables:
+1. currentJsonPathStack
+2. traversingListOrObjectStack
+3. jsonPathQueryResultsMap
+4. jsonPathQueryResultKeys
+Example:
+JsonData:
+{
+    "text": {
+        "lang": ["c++","python"],
+        "type": {
+            "int" : 0,
+            "float": 0.5
+        }
+    }
+}
+JsonPathQuery : $.text.type.*
+jsonPathQueryResultsMap = {
+    "$.text.type.int": 0,
+    "$.text.type.float": 0.5
+}
+jsonPathQueryResultKeys = ["$.text.type.int", "$.text.type.float"]
+when I process upto the "c++" token of the json given in the example.
+currentJsonPathStack = [{isStringKey: true, key: "$"},
+    {isStringKey: true, key: "text"},
+    {isStringKey: true, key: "lang"},
+    {isStringKey: false, index: 0}]
+traversingListOrObjectStack = ["object","object","list"]
+
+
+Algorithm:
+
+PartOfObject():
+
+
+processStreamEvent(streamToken, shouldAddThisEvent = false)
+    IF streamToken == KEY_TOKEN:
+        key=Key(isStringKey=false,index=-streamToken.value)
+        ignoreEventFlag =
+            ignoreEventFlag || !currentJsonPathMatchJsonPathQuery()
+        currentJsonPathStack.push(key)
+    ELSE IF streamToken == VALUE_TOKEN:
+        IF PartOfObject:
+            currentJsonPathStack.pop()
+            shouldAddThisEvent = true
+        ELSE IF PartOfList:
+            currentJsonPathStack.top().index++
+    ELSE IF streamToken == LIST_STARTED_TOKEN:
+        IF PartOfList:
+            currentJsonPathStack.top().index++
+        key = Key(isStringKey=false,index=-1)
+        in currentJsonPathStack.push(key)
+        traversingListOrObjectStack.push("list")
+    ELSE IF streamToken == LIST_ENDED_TOKEN:
+        currentJsonPathStack.pop()
+        IF PartOfObject:
+            currentJsonPathStack.pop()
+        shouldAddThisEvent=true
+    ELSE IF streamToken == OBJECT_STARTED_TOKEN:
+        IF PartOfList:
+            currentJsonPathStack.top().index++
+        traversingListOrObjectStack.push("object")
+    ELSE IF streamToken == OBJECT_ENDED_TOKEN:
+        traversingListOrObjectStack.pop()
+        IF PartOfObject:
+            currentJsonPathStack.pop()
+        shouldAddThisEvent=true
+
+RESULT_PROCESSING:
+
+JsonPathQuery Satisfaction Function:
+
+bool isThisKeyNotSatisfyQuery(const JsonPathKey &currentKey, const JsonPathKey &jsonPathQueryKey) {
+    return (jsonPathQueryKey.isStringKey != currentKey.isStringKey)
+           || (jsonPathQueryKey.isStringKey && !(jsonPathQueryKey.anyKey || jsonPathQueryKey.key == currentKey.key))
+           || (!jsonPathQueryKey.isStringKey
+               && (!((jsonPathQueryKey.anyIndex && currentKey.index != -1) ||
+                     jsonPathQueryKey.index == currentKey.index)));
+}
+
+bool currentJsonPathMatchJsonPathQuery() {
+    if (jsonPathQueryTokenized.size() > currentJsonPathStack.size())
+        return false;
+    for (int i = 0; i < jsonPathQueryTokenized.size(); i++) {
+        JsonPathKey currentKey = currentJsonPathStack[i];
+        JsonPathKey jsonPathQueryKey = jsonPathQueryTokenized[i];
+        if (isThisKeyNotSatisfyQuery(currentKey, jsonPathQueryKey)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+appendingDelimiterNeededBefore
+
+bool appendingDelimiterNeededBefore(const StreamToken &streamToken, const string &currentKey) {
+    StreamToken lastAddedStreamToken = jsonPathQueryResultsLastAddedTokenMap[currentKey];
+    if (lastAddedStreamToken.isDefault)
+        return false;
+    if (streamToken.tokenType == LIST_ENDED_TOKEN || streamToken.tokenType == OBJECT_ENDED_TOKEN) {
+        return false;
+    }
+    if (streamToken.tokenType == VALUE_TOKEN || streamToken.tokenType == LIST_STARTED_TOKEN ||
+        streamToken.tokenType == OBJECT_STARTED_TOKEN) {
+        return lastAddedStreamToken.tokenType == VALUE_TOKEN || lastAddedStreamToken.tokenType == OBJECT_ENDED_TOKEN ||
+               lastAddedStreamToken.tokenType == LIST_ENDED_TOKEN;
+    }
+    if (streamToken.tokenType == KEY_TOKEN) {
+        return lastAddedStreamToken.tokenType != OBJECT_STARTED_TOKEN;
+    }
+    return false;
+}
+
+Current Json Path Query temporary result:
+{
+    "text": {
+        "lang": ["c++","python"],
+        "type"" {
+            "int" : 0,
+            "float": 0.5
+
+Now If I got a '}' token I need to Just append '}' to the result.
+Whereas If I got a string key token I need to append a delimiter before appending the key the result
+
+addToJsonPathQueryResultIfNeeded function:
+
+void addToJsonPathQueryResultIfNeeded(const StreamToken &streamToken, bool ignoreEventFlag, bool shouldAddThisEvent,
+                                      bool previousKeyValid, string &previousKey) {
+    bool currentKeyMatched = currentJsonPathMatchJsonPathQuery();
+    if (currentKeyMatched && !ignoreEventFlag) {
+        string currentKey = getCurrentJsonPath();
+        addTokenInCurrentJsonPathResult(streamToken, currentKey + "");
+    } else if (!currentKeyMatched && shouldAddThisEvent && previousKeyValid) {
+        addTokenInCurrentJsonPathResult(streamToken, previousKey, !currentKeyMatched);
+    }
+}
+
+ignoreEventFlag variable:
+
+JsonData:
+{
+    "text": {
+        "lang": ["c++","python"],
+        "type": {
+            "int" : 0,
+            "float": 0.5
+        }
+    }
+}
+Json Path Query: $.text
+
+Need to ignore "text" token although json Path Query Satisfied
+
+shouldAddThisEvent variable:
+
+JsonData:
+{
+    "text": {
+        "lang": ["c++","python"],
+        "type": {
+            "int" : 0,
+            "float": 0.5
+        }
+    }
+}
+Json Path Query: $.text.lang
+
+Need to add ']' token although json Path Query Not Satisfied
+
+getCurrentJsonPath() function:
+
+string getCurrentJsonPath() {
+    string jsonPath;
+    for (int i = 0; i < jsonPathQueryTokenized.size() && i < currentJsonPathStack.size(); i++) {
+        JsonPathKey jsonPathKey = currentJsonPathStack[i];
+        string appendingString = getAppendingString(jsonPathKey);
+        jsonPath = jsonPath.append(appendingString);
+    }
+    return jsonPath;
+}
+
+JsonPathQuery : $.text.*
+currentJsonPathStack = [{isStringKey: true, key: "$"},{isStringKey: true, key: "text"},
+    {isStringKey: true, key: "lang"},{isStringKey: false, index: 0}]
+x = getCurrentJsonPath() // x = $.text.lang
+
+
+
+JsonData:
+{
+    "text": {
+        "lang": ["c++","python"],
+        "type": [["int","float"]]
+    }
+}
+
+
+
+string getJsonPathQueryResult() {
+    string finalResult;
+    for (const auto &jsonPath: jsonPathQueryResultKeys) {
+        string jsonPathValue = jsonPathQueryResultsMap[jsonPath];
+        if (finalResult.length()) {
+            finalResult.push_back(',');
+        }
+        finalResult.append(jsonPathValue);
+    }
+    if (multiResultExist) {
+        finalResult = "[" + finalResult + "]";
+    }
+    return finalResult;
+}
+
+
+
+class JsonPathKey {
+    bool isStringKey;
+    bool anyIndex; // (index == -2)
+    bool anyKey; // (key.length() == 0 || key == "*")
+    int index;
+    string key;
+};
+
+

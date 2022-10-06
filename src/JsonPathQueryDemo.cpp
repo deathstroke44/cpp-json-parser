@@ -2,6 +2,28 @@
 
 using namespace std;
 
+class StoredResult {
+public:
+    string jsonPathKey;
+    string objectListStack;
+    string currentKeyMatched;
+    string previousKeyValid;
+    string ignoreEventFlag;
+    string shouldAddThisEvent;
+    string needToUpdateResult;
+    string updateKey;
+    void printResult() {
+        cout<<"jsonPathKey: **"<<jsonPathKey <<"**</br>";
+        cout<<"objectListStack: **"<<objectListStack <<"**</br>";
+        cout<<"currentKeyMatched: **"<<currentKeyMatched <<"**</br>";
+        cout<<"previousKeyValid: **"<<previousKeyValid <<"**</br>";
+        cout<<"ignoreEventFlag: **"<<ignoreEventFlag <<"**</br>";
+        cout<<"shouldAddThisEvent: **"<<shouldAddThisEvent <<"**</br>";
+        cout<<"needToUpdateResult: **"<<needToUpdateResult <<"**</br>";
+        if (needToUpdateResult=="true") cout<<"updateKey: **"<<updateKey <<"**";
+        cout<<"</br>"<<"</br>";
+    }
+};
 
 string getJsonPathQueryResult();
 
@@ -10,7 +32,7 @@ bool isThisKeyNotSatisfyQuery(const JsonPathKey &currentKey, const JsonPathKey &
 void processStreamEvent(StreamToken &streamToken, bool &ignoreEventFlag, bool &shouldAddThisEvent);
 
 void addToJsonPathQueryResultIfNeeded(const StreamToken &streamToken, bool ignoreEventFlag, bool shouldAddThisEvent,
-                                      bool previousKeyValid, string &previousKey);
+                                      bool previousKeyValid, string &previousKey, StoredResult &storedResult);
 
 void initStates(string &jsonPathQuery);
 
@@ -40,6 +62,41 @@ map<string, StreamToken> jsonPathQueryResultsLastAddedTokenMap;
 vector<JsonPathKey> jsonPathQueryTokenized;
 bool multiResultExist = false;
 
+
+
+StoredResult printStateVariables()
+{
+    StoredResult storedResult = StoredResult();
+    string str = "[";
+    for (int i=0;i<currentJsonPathStack.size();i++) {
+        JsonPathKey jsonPathKey= currentJsonPathStack[i];
+        if (jsonPathKey.isStringKey) {
+            str+="{key: \""+jsonPathKey.key+"\"}";
+        }
+        else {
+            str+="{index: "+to_string(jsonPathKey.index)+"}"+"";
+        }
+        if (i == (currentJsonPathStack.size() - 1)) {
+            str+="]";
+        } else {
+            str+=", ";
+        }
+    }
+    storedResult.jsonPathKey = str;
+    string str1 = "[";
+    for (int i=0;i<traversingListOrObjectStack.size();i++) {
+        str1+=traversingListOrObjectStack[i];
+        if (i == (traversingListOrObjectStack.size() - 1)) {
+            str1+="]";
+        } else {
+            str1+=", ";
+        }
+    }
+    storedResult.objectListStack = str1;
+    return storedResult;
+}
+
+vector<StoredResult> storedResults;
 string getCurrentJsonPath() {
     string jsonPath;
     for (int i = 0; i < jsonPathQueryTokenized.size() && i < currentJsonPathStack.size(); i++) {
@@ -213,7 +270,7 @@ void setCurrentlyTraversingListOrObject(const string &value) {
 
 void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent) {
     StreamToken streamToken = jsonStreamEvent.getStreamToken();
-
+    cout<<"Processing this token: **{type: "<<streamToken.tokenType<<", value: "<<streamToken.value<<"}**"<<"</br>";
     if (streamToken.tokenType == DOCUMENT_END_TOKEN) {
         getJsonPathQueryResult();
         return;
@@ -225,17 +282,42 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
     string previousKey = getCurrentJsonPath();
 
     processStreamEvent(streamToken, ignoreEventFlag, shouldAddThisEvent);
-    addToJsonPathQueryResultIfNeeded(streamToken, ignoreEventFlag, shouldAddThisEvent, previousKeyValid, previousKey);
+    StoredResult storedResult = printStateVariables();
+    addToJsonPathQueryResultIfNeeded(streamToken, ignoreEventFlag, shouldAddThisEvent, previousKeyValid, previousKey, storedResult);
+    storedResults.push_back(storedResult);
+    storedResult.printResult();
+
+}
+
+string printBoolean(bool b) {
+    return b ? "true" : "false";
 }
 
 void addToJsonPathQueryResultIfNeeded(const StreamToken &streamToken, bool ignoreEventFlag, bool shouldAddThisEvent,
-                                      bool previousKeyValid, string &previousKey) {
+                                      bool previousKeyValid, string &previousKey, StoredResult &storedResult) {
     bool currentKeyMatched = currentJsonPathMatchJsonPathQuery();
+    bool needToUpdateResult = false;
+    string updatingThisKey;
     if (currentKeyMatched && !ignoreEventFlag) {
         string currentKey = getCurrentJsonPath();
         addTokenInCurrentJsonPathResult(streamToken, currentKey + "");
+        needToUpdateResult = true;
+        updatingThisKey = currentKey;
     } else if (!currentKeyMatched && shouldAddThisEvent && previousKeyValid) {
         addTokenInCurrentJsonPathResult(streamToken, previousKey);
+        needToUpdateResult = true;
+        updatingThisKey = previousKey;
+    }
+    storedResult.currentKeyMatched = printBoolean(currentKeyMatched);
+    storedResult.previousKeyValid = printBoolean(previousKeyValid);
+    storedResult.ignoreEventFlag = printBoolean(ignoreEventFlag);
+    storedResult.shouldAddThisEvent = printBoolean(shouldAddThisEvent);
+    storedResult.needToUpdateResult = printBoolean(needToUpdateResult);
+    if (needToUpdateResult) {
+        if (updatingThisKey.size()) {
+            updatingThisKey = updatingThisKey.substr(1,updatingThisKey.size()-1);
+        }
+        storedResult.updateKey = updatingThisKey;
     }
 }
 
@@ -340,7 +422,7 @@ void initStates(string &jsonPathQuery) {
 }
 
 void executeJsonPathQuery(string fileName, string jsonPathQuery) {
-    cout << "JSON path query:" << jsonPathQuery << " -filename: " << fileName << endl;
+    cout << "JSON path query:" << jsonPathQuery << " -filename: " << fileName << "</br>";
     fileName = "tests/Json files/" + fileName;
     initStates(jsonPathQuery);
     JsonStreamParser jsonStreamParser = JsonStreamParser();

@@ -1,0 +1,15 @@
+{
+  "case_1": {
+    "user": {
+      "name": "Jason",
+      "lang": ["python",["c","c++"]];
+      "address": {
+        "country": "Bangladesh",
+        "city": "Dhaka"
+      }
+    }
+  },
+  "case_2": {
+    "user": ["Mathew"]
+  }
+}
