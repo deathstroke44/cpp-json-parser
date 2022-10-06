@@ -52,7 +52,7 @@ PROCESS-STREAM-TOKEN-AND-UPDATE-STATES(streamToken, shouldAddThisEvent, ignoreEv
 
 handleEvent(streamToken):
     IF streamToken.tokenType == DOCUMENT_END:
-        processResult()
+        PROCESS-RESULT()
         RETURN
     shouldAddThisEvent = ignoreEventFlag = false;
     previousKeySatisfy = isCurrentJsonPathMatchJsonPathQuery();
