@@ -4,6 +4,7 @@ using namespace std;
 
 class StoredResult {
 public:
+    string processingToken;
     string jsonPathKey;
     string objectListStack;
     string currentKeyMatched;
@@ -12,16 +13,23 @@ public:
     string shouldAddThisEvent;
     string needToUpdateResult;
     string updateKey;
-    void printResult() {
-        cout<<"jsonPathKey: **"<<jsonPathKey <<"**</br>";
-        cout<<"objectListStack: **"<<objectListStack <<"**</br>";
-        cout<<"currentKeyMatched: **"<<currentKeyMatched <<"**</br>";
-        cout<<"previousKeyValid: **"<<previousKeyValid <<"**</br>";
-        cout<<"ignoreEventFlag: **"<<ignoreEventFlag <<"**</br>";
-        cout<<"shouldAddThisEvent: **"<<shouldAddThisEvent <<"**</br>";
-        cout<<"needToUpdateResult: **"<<needToUpdateResult <<"**</br>";
-        if (needToUpdateResult=="true") cout<<"updateKey: **"<<updateKey <<"**";
+    void printResult(StoredResult storedResult) {
+        cout<<endl<<endl;
+        cout<<"| Variable      | Value |"<<endl;
+        cout<<"| ----      | ---- |"<<endl;
+        cout<<"|processingToken: |**"<<processingToken <<"**|"<<endl;
+        cout<<"|jsonPathKeyPrev: |**"<<storedResult.jsonPathKey <<"**|"<<endl;
+        cout<<"|jsonPathKey: |**"<<jsonPathKey <<"**|"<<endl;
+        cout<<"|objectListStackPrev: |**"<<storedResult.objectListStack <<"**|"<<endl;
+        cout<<"|objectListStack: |**"<<objectListStack <<"**|"<<endl;
+        cout<<"|currentKeyMatched: |**"<<currentKeyMatched <<"**|"<<endl;
+        cout<<"|previousKeyValid: |**"<<previousKeyValid <<"**|"<<endl;
+        cout<<"|ignoreEventFlag: |**"<<ignoreEventFlag <<"**|"<<endl;
+        cout<<"|shouldAddThisEvent: |**"<<shouldAddThisEvent <<"**|"<<endl;
+        cout<<"|needToUpdateResult: |**"<<needToUpdateResult <<"**|"<<endl;
+        if (needToUpdateResult=="true") cout<<"|updateKey: |**"<<updateKey <<"**|"<<endl;
         cout<<"</br>"<<"</br>";
+        cout<<endl;
     }
 };
 
@@ -77,21 +85,21 @@ StoredResult printStateVariables()
             str+="{index: "+to_string(jsonPathKey.index)+"}"+"";
         }
         if (i == (currentJsonPathStack.size() - 1)) {
-            str+="]";
         } else {
             str+=", ";
         }
     }
+    str+="]";
     storedResult.jsonPathKey = str;
     string str1 = "[";
     for (int i=0;i<traversingListOrObjectStack.size();i++) {
         str1+=traversingListOrObjectStack[i];
         if (i == (traversingListOrObjectStack.size() - 1)) {
-            str1+="]";
         } else {
             str1+=", ";
         }
     }
+    str1+="]";
     storedResult.objectListStack = str1;
     return storedResult;
 }
@@ -270,8 +278,10 @@ void setCurrentlyTraversingListOrObject(const string &value) {
 
 void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent) {
     StreamToken streamToken = jsonStreamEvent.getStreamToken();
-    cout<<"Processing this token: **{type: "<<streamToken.tokenType<<", value: "<<streamToken.value<<"}**"<<"</br>";
     if (streamToken.tokenType == DOCUMENT_END_TOKEN) {
+        for (int i=1;i<storedResults.size();i++) {
+            storedResults[i].printResult(storedResults[i-1]);
+        }
         getJsonPathQueryResult();
         return;
     }
@@ -283,9 +293,9 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
 
     processStreamEvent(streamToken, ignoreEventFlag, shouldAddThisEvent);
     StoredResult storedResult = printStateVariables();
+    storedResult.processingToken= "{type: "+to_string(streamToken.tokenType)+", value: "+streamToken.value+"}";
     addToJsonPathQueryResultIfNeeded(streamToken, ignoreEventFlag, shouldAddThisEvent, previousKeyValid, previousKey, storedResult);
     storedResults.push_back(storedResult);
-    storedResult.printResult();
 
 }
 
@@ -425,6 +435,8 @@ void executeJsonPathQuery(string fileName, string jsonPathQuery) {
     cout << "JSON path query:" << jsonPathQuery << " -filename: " << fileName << "</br>";
     fileName = "tests/Json files/" + fileName;
     initStates(jsonPathQuery);
+    StoredResult storedResult = printStateVariables();
+    storedResults.push_back(storedResult);
     JsonStreamParser jsonStreamParser = JsonStreamParser();
     jsonStreamParser.setEventHandler(handleJsonStreamParserEvent);
     jsonStreamParser.startJsonStreaming(fileName);
