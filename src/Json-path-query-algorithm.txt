@@ -27,8 +27,8 @@ PROCESS-STREAM-TOKEN-AND-UPDATE-STATES(streamToken, shouldAddThisEvent, ignoreEv
         currentJsonPathStack.push({isStringKey:true, key: streamToken.value})
     else if streamToken.type == VALUE_TOKEN
         if PartOfObject:
+            shouldAddThisEvent = isCurrentJsonPathMatchJsonPathQuery()
             currentJsonPathStack.pop()
-            shouldAddThisEvent = true
         else if PartOfList: currentJsonPathStack.top().index++
     else if streamToken.type == LIST_STARTED_TOKEN
         if PartOfList: currentJsonPathStack.top().index++
@@ -36,15 +36,17 @@ PROCESS-STREAM-TOKEN-AND-UPDATE-STATES(streamToken, shouldAddThisEvent, ignoreEv
         traversingListOrObjectStack.push("list")
     else if streamToken.type == LIST_ENDED_TOKEN
         currentJsonPathStack.pop()
-        if PartOfObject: currentJsonPathStack.pop()
-        shouldAddThisEvent=isCurrentTokenLastCharacterOfKeysValue();
-    else if streamToken.type == OBJECT_STARTED_TOKEN:
+        if PartOfObject
+            shouldAddThisEvent=isCurrentJsonPathMatchJsonPathQuery();
+            currentJsonPathStack.pop()
+    else if streamToken.type == OBJECT_STARTED_TOKEN
         if PartOfList: currentJsonPathStack.top().index++
         traversingListOrObjectStack.push("object")
-    else if streamToken.type == OBJECT_ENDED_TOKEN:
+    else if streamToken.type == OBJECT_ENDED_TOKEN
+        shouldAddThisEvent=isCurrentJsonPathMatchJsonPathQuery();
         traversingListOrObjectStack.pop()
-        if PartOfObject: currentJsonPathStack.pop()
-        shouldAddThisEvent=true
+        if PartOfObject
+            currentJsonPathStack.pop()
 
 HANDLE-EVENT(streamToken):
     IF streamToken.tokenType == DOCUMENT_END:
