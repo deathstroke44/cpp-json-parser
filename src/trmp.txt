@@ -1,0 +1,20 @@
+UPDATE-RESULT(streamToken, key):
+    resultUpToNowForThisKey = jsonPathQueryResultKeys.get(key)
+    lastAddedToken = jsonPathQueryResultsLastAddedTokenMap.get(key)
+    if appendingDelimiterNeeded(streamToken, lastAddedToken)
+        resultUpToNowForThisKey.append(",")
+    resultUpToNowForThisKey.append(getProcessedValue(streamToken))
+    jsonPathQueryResultKeys.set(key,resultUpToNowForThisKey)
+    jsonPathQueryResultsLastAddedTokenMap.set(key,streamToken)
+
+UPDATE-RESULT-IF-NEEDED(streamToken, ignoreEventFlag, shouldAddThisEvent, previousKeySatisfy, previousKey):
+    currentKeySatisfy = isCurrentJsonPathMatchJsonPathQuery()
+    if currentKeyMatched and not ignoreEventFlag
+        currentKey = getCurrentJsonPathUptoQueryLength()
+        UPDATE-RESULT(streamToken, currentKey)
+    else if (not currentKeySatisfy and shouldAddThisEvent and previousKeySatisfy)
+        UPDATE-RESULT(streamToken, previousKey)
+
+
+
+

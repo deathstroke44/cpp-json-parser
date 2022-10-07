@@ -2,7 +2,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 1, value: object}**|
+|iteration: |**1**|
+|processingToken: |**{type: OBJECT_STARTED_TOKEN, value: object}**|
 |jsonPathKeyPrev: |**[{key: "$"}]**|
 |jsonPathKey: |**[{key: "$"}]**|
 |objectListStackPrev: |**[]**|
@@ -17,7 +18,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 0, value: case_1}**|
+|iteration: |**2**|
+|processingToken: |**{type: KEY_TOKEN, value: case_1}**|
 |jsonPathKeyPrev: |**[{key: "$"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}]**|
 |objectListStackPrev: |**[object]**|
@@ -32,7 +34,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 1, value: object}**|
+|iteration: |**3**|
+|processingToken: |**{type: OBJECT_STARTED_TOKEN, value: object}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}]**|
 |objectListStackPrev: |**[object]**|
@@ -47,7 +50,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 0, value: user}**|
+|iteration: |**4**|
+|processingToken: |**{type: KEY_TOKEN, value: user}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}]**|
 |objectListStackPrev: |**[object, object]**|
@@ -62,7 +66,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 1, value: object}**|
+|iteration: |**5**|
+|processingToken: |**{type: OBJECT_STARTED_TOKEN, value: object}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}]**|
 |objectListStackPrev: |**[object, object]**|
@@ -78,7 +83,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 0, value: name}**|
+|iteration: |**6**|
+|processingToken: |**{type: KEY_TOKEN, value: name}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "name"}]**|
 |objectListStackPrev: |**[object, object, object]**|
@@ -94,7 +100,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 6, value: Jason}**|
+|iteration: |**7**|
+|processingToken: |**{type: VALUE_TOKEN, value: Jason}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "name"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}]**|
 |objectListStackPrev: |**[object, object, object]**|
@@ -110,7 +117,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 0, value: lang}**|
+|iteration: |**8**|
+|processingToken: |**{type: KEY_TOKEN, value: lang}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}]**|
 |objectListStackPrev: |**[object, object, object]**|
@@ -126,7 +134,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 3, value: list}**|
+|iteration: |**9**|
+|processingToken: |**{type: LIST_STARTED_TOKEN, value: list}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}, {index: -1}]**|
 |objectListStackPrev: |**[object, object, object]**|
@@ -142,7 +151,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 6, value: python}**|
+|iteration: |**10**|
+|processingToken: |**{type: VALUE_TOKEN, value: python}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}, {index: -1}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}, {index: 0}]**|
 |objectListStackPrev: |**[object, object, object, list]**|
@@ -158,7 +168,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 3, value: list}**|
+|iteration: |**11**|
+|processingToken: |**{type: LIST_STARTED_TOKEN, value: list}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}, {index: 0}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}, {index: 1}, {index: -1}]**|
 |objectListStackPrev: |**[object, object, object, list]**|
@@ -174,7 +185,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 6, value: c}**|
+|iteration: |**12**|
+|processingToken: |**{type: VALUE_TOKEN, value: c}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}, {index: 1}, {index: -1}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}, {index: 1}, {index: 0}]**|
 |objectListStackPrev: |**[object, object, object, list, list]**|
@@ -190,7 +202,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 6, value: c++}**|
+|iteration: |**13**|
+|processingToken: |**{type: VALUE_TOKEN, value: c++}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}, {index: 1}, {index: 0}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}, {index: 1}, {index: 1}]**|
 |objectListStackPrev: |**[object, object, object, list, list]**|
@@ -206,7 +219,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 4, value: list}**|
+|iteration: |**14**|
+|processingToken: |**{type: LIST_ENDED_TOKEN, value: list}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}, {index: 1}, {index: 1}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}, {index: 1}]**|
 |objectListStackPrev: |**[object, object, object, list, list]**|
@@ -222,7 +236,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 4, value: list}**|
+|iteration: |**15**|
+|processingToken: |**{type: LIST_ENDED_TOKEN, value: list}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "lang"}, {index: 1}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}]**|
 |objectListStackPrev: |**[object, object, object, list]**|
@@ -238,7 +253,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 0, value: address}**|
+|iteration: |**16**|
+|processingToken: |**{type: KEY_TOKEN, value: address}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "address"}]**|
 |objectListStackPrev: |**[object, object, object]**|
@@ -254,7 +270,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 1, value: object}**|
+|iteration: |**17**|
+|processingToken: |**{type: OBJECT_STARTED_TOKEN, value: object}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "address"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "address"}]**|
 |objectListStackPrev: |**[object, object, object]**|
@@ -270,7 +287,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 0, value: country}**|
+|iteration: |**18**|
+|processingToken: |**{type: KEY_TOKEN, value: country}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "address"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "address"}, {key: "country"}]**|
 |objectListStackPrev: |**[object, object, object, object]**|
@@ -286,7 +304,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 6, value: Bangladesh}**|
+|iteration: |**19**|
+|processingToken: |**{type: VALUE_TOKEN, value: Bangladesh}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "address"}, {key: "country"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "address"}]**|
 |objectListStackPrev: |**[object, object, object, object]**|
@@ -302,7 +321,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 0, value: city}**|
+|iteration: |**20**|
+|processingToken: |**{type: KEY_TOKEN, value: city}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "address"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "address"}, {key: "city"}]**|
 |objectListStackPrev: |**[object, object, object, object]**|
@@ -318,7 +338,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 6, value: Dhaka}**|
+|iteration: |**21**|
+|processingToken: |**{type: VALUE_TOKEN, value: Dhaka}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "address"}, {key: "city"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "address"}]**|
 |objectListStackPrev: |**[object, object, object, object]**|
@@ -334,7 +355,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 2, value: object}**|
+|iteration: |**22**|
+|processingToken: |**{type: OBJECT_ENDED_TOKEN, value: object}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}, {key: "address"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}, {key: "user"}]**|
 |objectListStackPrev: |**[object, object, object, object]**|
@@ -350,7 +372,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 2, value: object}**|
+|iteration: |**23**|
+|processingToken: |**{type: OBJECT_ENDED_TOKEN, value: object}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}, {key: "user"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_1"}]**|
 |objectListStackPrev: |**[object, object, object]**|
@@ -366,7 +389,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 2, value: object}**|
+|iteration: |**24**|
+|processingToken: |**{type: OBJECT_ENDED_TOKEN, value: object}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_1"}]**|
 |jsonPathKey: |**[{key: "$"}]**|
 |objectListStackPrev: |**[object, object]**|
@@ -381,7 +405,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 0, value: case_2}**|
+|iteration: |**25**|
+|processingToken: |**{type: KEY_TOKEN, value: case_2}**|
 |jsonPathKeyPrev: |**[{key: "$"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_2"}]**|
 |objectListStackPrev: |**[object]**|
@@ -396,7 +421,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 1, value: object}**|
+|iteration: |**26**|
+|processingToken: |**{type: OBJECT_STARTED_TOKEN, value: object}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_2"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_2"}]**|
 |objectListStackPrev: |**[object]**|
@@ -411,7 +437,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 0, value: user}**|
+|iteration: |**27**|
+|processingToken: |**{type: KEY_TOKEN, value: user}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_2"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_2"}, {key: "user"}]**|
 |objectListStackPrev: |**[object, object]**|
@@ -426,7 +453,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 3, value: list}**|
+|iteration: |**28**|
+|processingToken: |**{type: LIST_STARTED_TOKEN, value: list}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_2"}, {key: "user"}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_2"}, {key: "user"}, {index: -1}]**|
 |objectListStackPrev: |**[object, object]**|
@@ -442,7 +470,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 6, value: Mathew}**|
+|iteration: |**29**|
+|processingToken: |**{type: VALUE_TOKEN, value: Mathew}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_2"}, {key: "user"}, {index: -1}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_2"}, {key: "user"}, {index: 0}]**|
 |objectListStackPrev: |**[object, object, list]**|
@@ -458,7 +487,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 4, value: list}**|
+|iteration: |**30**|
+|processingToken: |**{type: LIST_ENDED_TOKEN, value: list}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_2"}, {key: "user"}, {index: 0}]**|
 |jsonPathKey: |**[{key: "$"}, {key: "case_2"}]**|
 |objectListStackPrev: |**[object, object, list]**|
@@ -474,7 +504,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 2, value: object}**|
+|iteration: |**31**|
+|processingToken: |**{type: OBJECT_ENDED_TOKEN, value: object}**|
 |jsonPathKeyPrev: |**[{key: "$"}, {key: "case_2"}]**|
 |jsonPathKey: |**[{key: "$"}]**|
 |objectListStackPrev: |**[object, object]**|
@@ -489,7 +520,8 @@ JSON path query:$..user -filename: example.json</br>
 
 | Variable      | Value |
 | ----      | ---- |
-|processingToken: |**{type: 2, value: object}**|
+|iteration: |**32**|
+|processingToken: |**{type: OBJECT_ENDED_TOKEN, value: object}**|
 |jsonPathKeyPrev: |**[{key: "$"}]**|
 |jsonPathKey: |**[{key: "$"}]**|
 |objectListStackPrev: |**[object]**|

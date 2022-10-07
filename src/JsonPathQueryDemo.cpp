@@ -2,6 +2,26 @@
 
 using namespace std;
 
+string getPolishedText(JsonTokenType jsonTokenType) {
+    switch (jsonTokenType) {
+        case KEY_TOKEN:
+            return "KEY_TOKEN";
+        case OBJECT_STARTED_TOKEN:
+            return "OBJECT_STARTED_TOKEN";
+        case OBJECT_ENDED_TOKEN:
+            return "OBJECT_ENDED_TOKEN";
+        case LIST_STARTED_TOKEN:
+            return "LIST_STARTED_TOKEN";
+        case LIST_ENDED_TOKEN:
+            return "LIST_ENDED_TOKEN";
+        case VALUE_TOKEN:
+            return "VALUE_TOKEN";
+        case DOCUMENT_END_TOKEN:
+            return "DOCUMENT_END_TOKEN";
+    }
+    return to_string(jsonTokenType);
+}
+
 class StoredResult {
 public:
     string processingToken;
@@ -13,10 +33,11 @@ public:
     string shouldAddThisEvent;
     string needToUpdateResult;
     string updateKey;
-    void printResult(StoredResult storedResult) {
+    void printResult(StoredResult storedResult, int iteration) {
         cout<<endl<<endl;
         cout<<"| Variable      | Value |"<<endl;
         cout<<"| ----      | ---- |"<<endl;
+        cout<<"|iteration: |**"<<iteration <<"**|"<<endl;
         cout<<"|processingToken: |**"<<processingToken <<"**|"<<endl;
         cout<<"|jsonPathKeyPrev: |**"<<storedResult.jsonPathKey <<"**|"<<endl;
         cout<<"|jsonPathKey: |**"<<jsonPathKey <<"**|"<<endl;
@@ -280,7 +301,7 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
     StreamToken streamToken = jsonStreamEvent.getStreamToken();
     if (streamToken.tokenType == DOCUMENT_END_TOKEN) {
         for (int i=1;i<storedResults.size();i++) {
-            storedResults[i].printResult(storedResults[i-1]);
+            storedResults[i].printResult(storedResults[i-1], i);
         }
         getJsonPathQueryResult();
         return;
@@ -293,7 +314,7 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
 
     processStreamEvent(streamToken, ignoreEventFlag, shouldAddThisEvent);
     StoredResult storedResult = printStateVariables();
-    storedResult.processingToken= "{type: "+to_string(streamToken.tokenType)+", value: "+streamToken.value+"}";
+    storedResult.processingToken= "{type: "+getPolishedText(streamToken.tokenType)+", value: "+streamToken.value+"}";
     addToJsonPathQueryResultIfNeeded(streamToken, ignoreEventFlag, shouldAddThisEvent, previousKeyValid, previousKey, storedResult);
     storedResults.push_back(storedResult);
 
