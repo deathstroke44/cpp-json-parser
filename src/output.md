@@ -245,7 +245,7 @@ JSON path query:$..user -filename: example.json</br>
 |currentKeyMatched: |**true**|
 |previousKeyValid: |**true**|
 |ignoreEventFlag: |**false**|
-|shouldAddThisEvent: |**false**|
+|shouldAddThisEvent: |**true**|
 |needToUpdateResult: |**true**|
 |updateKey: |**$.case_1.user**|
 </br></br>
@@ -398,7 +398,7 @@ JSON path query:$..user -filename: example.json</br>
 |currentKeyMatched: |**false**|
 |previousKeyValid: |**false**|
 |ignoreEventFlag: |**false**|
-|shouldAddThisEvent: |**true**|
+|shouldAddThisEvent: |**false**|
 |needToUpdateResult: |**false**|
 </br></br>
 
@@ -513,7 +513,7 @@ JSON path query:$..user -filename: example.json</br>
 |currentKeyMatched: |**false**|
 |previousKeyValid: |**false**|
 |ignoreEventFlag: |**false**|
-|shouldAddThisEvent: |**true**|
+|shouldAddThisEvent: |**false**|
 |needToUpdateResult: |**false**|
 </br></br>
 
@@ -529,7 +529,7 @@ JSON path query:$..user -filename: example.json</br>
 |currentKeyMatched: |**false**|
 |previousKeyValid: |**false**|
 |ignoreEventFlag: |**false**|
-|shouldAddThisEvent: |**true**|
+|shouldAddThisEvent: |**false**|
 |needToUpdateResult: |**false**|
 </br></br>
 All answers: .$.case_1.user -> {"name" : "Jason","lang" : ["python",["c","c++"]],"address" : {"country" : "Bangladesh","city" : "Dhaka"}}
