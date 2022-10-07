@@ -49,9 +49,9 @@ PROCESS-STREAM-TOKEN-AND-UPDATE-STATES(streamToken, shouldAddThisEvent, ignoreEv
             currentJsonPathStack.pop()
 
 HANDLE-EVENT(streamToken):
-    IF streamToken.tokenType == DOCUMENT_END:
+    if streamToken.tokenType == DOCUMENT_END:
         PROCESS-RESULT()
-        RETURN
+        return
     shouldAddThisEvent = ignoreEventFlag = false
     previousKeySatisfy = isCurrentJsonPathMatchJsonPathQuery()
     PROCESS-STREAM-TOKEN-AND-UPDATE-STATES(streamToken, shouldAddThisEvent, ignoreEventFlag)
