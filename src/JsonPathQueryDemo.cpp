@@ -245,6 +245,7 @@ void processStreamEvent(StreamToken &streamToken, bool &ignoreEventFlag, bool &s
         currentJsonPathStack.emplace_back(streamToken.value, true);
     } else if (streamToken.tokenType == VALUE_TOKEN) {
         if (isCurrentTokenIsPartOfObject()) {
+            shouldAddThisEvent = currentJsonPathMatchJsonPathQuery();
             popCurrentJsonPathStack();
             shouldAddThisEvent = true;
         } else if (isCurrentTokenIsPartOfList()) {
@@ -254,17 +255,21 @@ void processStreamEvent(StreamToken &streamToken, bool &ignoreEventFlag, bool &s
         handleNewListStarted();
         setCurrentlyTraversingListOrObject("list");
     } else if (streamToken.tokenType == LIST_ENDED_TOKEN) {
-        handleListEnded();
-        shouldAddThisEvent = (currentJsonPathStack.size() + 1 == jsonPathQueryTokenized.size()
-                              && jsonPathQueryTokenized[jsonPathQueryTokenized.size() - 1].isStringKey);
+        popCurrentlyTraversingInListOrObjectStack();
+        if (isLastKeyOfCurrentPathIndex())
+            popCurrentJsonPathStack();
+        if (isCurrentTokenIsPartOfObject()) {
+            shouldAddThisEvent = currentJsonPathMatchJsonPathQuery();
+            popCurrentJsonPathStack();
+        }
     } else if (streamToken.tokenType == OBJECT_STARTED_TOKEN) {
         if (isCurrentTokenIsPartOfList()) {
             handleNewValueAddedInList();
         }
         setCurrentlyTraversingListOrObject("object");
     } else if (streamToken.tokenType == OBJECT_ENDED_TOKEN) {
+        shouldAddThisEvent = currentJsonPathMatchJsonPathQuery();
         handleObjectEnded();
-        shouldAddThisEvent = true;
     }
 }
 
