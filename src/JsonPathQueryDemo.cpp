@@ -247,7 +247,6 @@ void processStreamEvent(StreamToken &streamToken, bool &ignoreEventFlag, bool &s
         if (isCurrentTokenIsPartOfObject()) {
             shouldAddThisEvent = currentJsonPathMatchJsonPathQuery();
             popCurrentJsonPathStack();
-            shouldAddThisEvent = true;
         } else if (isCurrentTokenIsPartOfList()) {
             handleNewValueAddedInList();
         }
