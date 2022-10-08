@@ -10,7 +10,7 @@ bool isThisKeyNotSatisfyQuery(const JsonPathKey &currentKey, const JsonPathKey &
 void processStreamEvent(StreamToken &streamToken, bool &ignoreEventFlag, bool &shouldAddThisEvent);
 
 void addToJsonPathQueryResultIfNeeded(const StreamToken &streamToken, bool ignoreEventFlag, bool shouldAddThisEvent,
-                                      bool previousKeyValid, string &previousKey);
+                                      string &previousKey);
 
 void initStates(string &jsonPathQuery);
 
@@ -187,13 +187,7 @@ void handleNewListStarted() {
     currentJsonPathStack.emplace_back(-1);
 }
 
-void handleListEnded() {
-    popCurrentlyTraversingInListOrObjectStack();
-    if (isLastKeyOfCurrentPathIndex())
-        popCurrentJsonPathStack();
-    if (isCurrentTokenIsPartOfObject())
-        popCurrentJsonPathStack();
-}
+
 
 void handleObjectEnded() {
     popCurrentlyTraversingInListOrObjectStack();
@@ -225,16 +219,16 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
     string previousKey = getCurrentJsonPath();
 
     processStreamEvent(streamToken, ignoreEventFlag, shouldAddThisEvent);
-    addToJsonPathQueryResultIfNeeded(streamToken, ignoreEventFlag, shouldAddThisEvent, previousKeyValid, previousKey);
+    addToJsonPathQueryResultIfNeeded(streamToken, ignoreEventFlag, shouldAddThisEvent, previousKey);
 }
 
 void addToJsonPathQueryResultIfNeeded(const StreamToken &streamToken, bool ignoreEventFlag, bool shouldAddThisEvent,
-                                      bool previousKeyValid, string &previousKey) {
+                                      string &previousKey) {
     bool currentKeyMatched = currentJsonPathMatchJsonPathQuery();
     if (currentKeyMatched && !ignoreEventFlag) {
         string currentKey = getCurrentJsonPath();
         addTokenInCurrentJsonPathResult(streamToken, currentKey + "");
-    } else if (!currentKeyMatched && shouldAddThisEvent && previousKeyValid) {
+    } else if (!currentKeyMatched && shouldAddThisEvent) {
         addTokenInCurrentJsonPathResult(streamToken, previousKey);
     }
 }
