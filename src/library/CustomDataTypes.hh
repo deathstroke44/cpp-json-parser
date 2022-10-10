@@ -67,22 +67,22 @@ public:
 
 };
 
-class JsonPathKey {
+class Node {
 public:
-    bool isStringKey = false, anyIndex = false, anyKey = false;
+    bool isKey = false, anyIndex = false, anyKey = false;
     int index;
     string key;
 
-    JsonPathKey() = default;
+    Node() = default;
 
-    explicit JsonPathKey(int index) {
+    explicit Node(int index) {
         this->index = index;
         anyIndex = (index == -2);
     };
 
-    JsonPathKey(string key, bool dummy) {
+    Node(string key, bool dummy) {
         this->key = key;
-        isStringKey = true;
+        isKey = true;
         anyKey = (key.length() == 0 || key == "*");
     };
 };

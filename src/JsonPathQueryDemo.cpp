@@ -5,7 +5,7 @@ using namespace std;
 
 string getJsonPathQueryResult();
 
-bool isThisKeyNotSatisfyQuery(const JsonPathKey &currentKey, const JsonPathKey &jsonPathQueryKey);
+bool isThisKeyNotSatisfyQuery(const Node &currentKey, const Node &jsonPathQueryKey);
 
 void processStreamEvent(StreamToken &streamToken, bool &ignoreEventFlag, bool &shouldAddThisEvent);
 
@@ -14,9 +14,9 @@ void addToJsonPathQueryResultIfNeeded(const StreamToken &streamToken, bool ignor
 
 void initStates(string &jsonPathQuery);
 
-string getAppendingString(const JsonPathKey &jsonPathKey);
+string getAppendingString(const Node &jsonPathKey);
 
-vector<JsonPathKey> currentJsonPathStack;
+vector<Node> currentJsonPathStack;
 /**
  * Currently, I am processing a value token that can be an immediate part of a list/object. this stack maintains this information
   When I got a list/object end token I pop this stack
@@ -37,26 +37,26 @@ map<string, StreamToken> jsonPathQueryResultsLastAddedTokenMap;
 /**
  * Processed tokenized version of json path query
  */
-vector<JsonPathKey> jsonPathQueryTokenized;
+vector<Node> jsonPathQueryTokenized;
 bool multiResultExist = false;
 
 string getCurrentJsonPath() {
     string jsonPath;
     for (int i = 0; i < jsonPathQueryTokenized.size() && i < currentJsonPathStack.size(); i++) {
-        JsonPathKey jsonPathKey = currentJsonPathStack[i];
+        Node jsonPathKey = currentJsonPathStack[i];
         string appendingString = getAppendingString(jsonPathKey);
         jsonPath = jsonPath.append(appendingString);
     }
     return jsonPath;
 }
 
-string getAppendingString(const JsonPathKey &jsonPathKey) {
-    return !jsonPathKey.isStringKey ? "[" + to_string(jsonPathKey.index) + "]" : "." + jsonPathKey.key;
+string getAppendingString(const Node &jsonPathKey) {
+    return !jsonPathKey.isKey ? "[" + to_string(jsonPathKey.index) + "]" : "." + jsonPathKey.key;
 }
 
 bool isLastKeyOfCurrentPathIndex() {
     return !currentJsonPathStack.empty()
-           && !currentJsonPathStack[currentJsonPathStack.size() - 1].isStringKey;
+           && !currentJsonPathStack[currentJsonPathStack.size() - 1].isKey;
 }
 
 /**
@@ -133,8 +133,8 @@ bool currentJsonPathMatchJsonPathQuery() {
     if (jsonPathQueryTokenized.size() > currentJsonPathStack.size())
         return false;
     for (int i = 0; i < jsonPathQueryTokenized.size(); i++) {
-        JsonPathKey currentKey = currentJsonPathStack[i];
-        JsonPathKey jsonPathQueryKey = jsonPathQueryTokenized[i];
+        Node currentKey = currentJsonPathStack[i];
+        Node jsonPathQueryKey = jsonPathQueryTokenized[i];
         if (isThisKeyNotSatisfyQuery(currentKey, jsonPathQueryKey)) {
             return false;
         }
@@ -142,10 +142,10 @@ bool currentJsonPathMatchJsonPathQuery() {
     return true;
 }
 
-bool isThisKeyNotSatisfyQuery(const JsonPathKey &currentKey, const JsonPathKey &jsonPathQueryKey) {
-    return (jsonPathQueryKey.isStringKey != currentKey.isStringKey)
-           || (jsonPathQueryKey.isStringKey && !(jsonPathQueryKey.anyKey || jsonPathQueryKey.key == currentKey.key))
-           || (!jsonPathQueryKey.isStringKey
+bool isThisKeyNotSatisfyQuery(const Node &currentKey, const Node &jsonPathQueryKey) {
+    return (jsonPathQueryKey.isKey != currentKey.isKey)
+           || (jsonPathQueryKey.isKey && !(jsonPathQueryKey.anyKey || jsonPathQueryKey.key == currentKey.key))
+           || (!jsonPathQueryKey.isKey
                && (!((jsonPathQueryKey.anyIndex && currentKey.index != -1) ||
                      jsonPathQueryKey.index == currentKey.index)));
 }
@@ -289,10 +289,10 @@ string getJsonPathQueryResult() {
 
 void addKeyToJsonPathQueryProcessedList(bool listIndex, string val) {
     if (listIndex) {
-        JsonPathKey jsonPathKey(val == "*" ? -2 : stoi(val));
+        Node jsonPathKey(val == "*" ? -2 : stoi(val));
         jsonPathQueryTokenized.push_back(jsonPathKey);
     } else {
-        JsonPathKey jsonPathKey(val, true);
+        Node jsonPathKey(val, true);
         jsonPathQueryTokenized.push_back(jsonPathKey);
     }
 }
@@ -332,7 +332,7 @@ void processJsonPathQuery(string jsonPathQuery) {
 }
 
 void initStates(string &jsonPathQuery) {
-    JsonPathKey jsonPathKey("$", true);
+    Node jsonPathKey("$", true);
     currentJsonPathStack.push_back(jsonPathKey);
     processJsonPathQuery(jsonPathQuery);
 }

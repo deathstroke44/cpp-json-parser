@@ -1,0 +1,198 @@
+processToken(streamToken):
+    if streamToken.tokenType == KEY_TOKEN
+        if isCurrentJsonPathSatisfyQuery()
+            addThisTokenToJsonPathQueryResult(streamToken)
+        currentJsonPathNodesStack.push({key: streamToken.value})
+    elseif streamToken.tokenType == VALUE_TOKEN
+        if isLastNodeOfCurrentJsonPathIsIndex() 
+            currentJsonPathNodesStack.top().index++
+        if isCurrentJsonPathSatisfyQuery()
+            addThisTokenToJsonPathQueryResult(streamToken)
+        if isLastNodeOfCurrentJsonPathIsKey()
+            currentJsonPathNodesStack.pop()
+    elseif streamToken.tokenType == OBJECT_STARTED_TOKEN
+        if isLastNodeOfCurrentJsonPathIsIndex()
+            currentJsonPathNodesStack.top().index++
+        if isCurrentJsonPathSatisfyQuery()
+            addThisTokenToJsonPathQueryResult(streamToken)
+    elseif streamToken.tokenType == OBJECT_ENDED_TOKEN
+        if isCurrentJsonPathSatisfyQuery() 
+            addThisTokenToJsonPathQueryResult(streamToken)
+        if isLastNodeOfCurrentJsonPathIsKey()
+            currentJsonPathNodesStack.pop()
+    elseif streamToken.tokenType == LIST_STARTED_TOKEN
+        if isLastNodeOfCurrentJsonPathIsIndex()
+            currentJsonPathNodesStack.top().index++
+        if isCurrentJsonPathSatisfyQuery()
+            addThisTokenToJsonPathQueryResult(streamToken);
+        currentJsonPathNodesStack.push({index: -1})
+    elseif streamToken.tokenType == LIST_ENDED_TOKEN
+        currentJsonPathNodesStack.pop()
+        if isCurrentJsonPathSatisfyQuery()
+            addThisTokenToJsonPathQueryResult(streamToken);
+        if isLastNodeOfCurrentJsonPathIsKey()
+            currentJsonPathNodesStack.pop()
+    elseif streamToken.tokenType == DOCUMENT_END_TOKEN
+        displayResult()
+
+KEY_TOKEN
+
+{
+    "user": {
+        "name": ["Oni", "Omi"],
+        "country": "Bangladesh"
+    }
+}
+
+
+Step 1: If current Json path satisfy query add current processing token to the Result
+
+Step 2: push the key to the current json path nodes stack
+
+Example:
+
+State before processing "user" token: []
+
+Step 1: Not satisfied
+
+Step 2: ["user"]
+
+State before processing "name" token: ["user"]
+
+Step 1: Satisfied. So add this token to the result
+
+Step 2: ["user", "name"]
+
+
+VALUE_TOKEN
+
+{
+    "user": {
+        "name": ["Oni", "Omi"],
+        "country": "Bangladesh"
+    }
+}
+
+Step 1: Increment index of the last node if it is an index index node
+
+Step 2: If current Json path satisfy query add current processing token to the Result
+
+Step 3: pop current json path nodes stack if top element of the stack is a key node
+
+Example:
+
+State before processing "Omi" token: ["user", "name", 0]
+
+Step 1: Satisfied. ["user", "name", 1]
+
+Step 2: Satisfied. So add this token to the result
+
+Step 3: Not Satisfied.
+
+
+State before processing "Bangladesh" token: ["user", "country"]
+
+Step 1: Not Satisfied.
+
+Step 2: Satisfied. So add this token to the result
+
+Step 3: Satisfied. ["user"]
+
+OBJECT_STARTED_TOKEN
+
+{
+    "user": {
+        "name": ["Oni", "Omi"],
+        "country": "Bangladesh",
+        "address": {"road": 11},
+        "list": [["python", {"c++": "cpp"}]]
+    }
+}
+
+Step 1: Increment index of the last node if it is an index index node
+
+Step 2: If current Json path satisfy query add current processing token to the Result
+
+State before processing "{" token: ["user", "address"]
+
+Step 1: Not Satisfied.
+
+Step 2: Satisfied. So add this token to the result
+
+State before processing "{" token: ["user", "list", 0, 0]
+
+Step 1: Satisfied. ["user", "list", 0, 1]
+
+Step 2: Satisfied. So add this token to the result
+
+elseif streamToken.tokenType == OBJECT_ENDED_TOKEN
+        if isCurrentJsonPathSatisfyQuery() 
+            addThisTokenToJsonPathQueryResult(streamToken)
+        if isLastNodeOfCurrentJsonPathIsKey()
+            currentJsonPathNodesStack.pop()
+
+{
+    "user": {
+        "name": ["Oni", "Omi"],
+        "country": "Bangladesh",
+        "address": {"road": 11},
+        "list": [["python", {"c++": "cpp"}]]
+    }
+}
+
+
+Step 1: If current Json path satisfy query add current processing token to the Result
+
+Step 2: pop current json path nodes stack if top element of the stack is a key node
+
+State before processing "}" token: ["user", "address"]
+
+Step 1: Satisfied. So add this token to the result
+
+Step 2: Satisfied. ["user"]
+
+State before processing "}" token: ["user", "list", 0, 1]
+
+Step 1: Satisfied. So add this token to the result
+
+Step 2: Not Satisfied.
+
+LIST_ENDED_TOKEN
+
+{
+    "user": {
+        "name": ["Oni", "Omi"],
+        "country": "Bangladesh",
+        "address": {"road": 11},
+        "list": [["python", {"c++": "cpp"}]]
+    }
+}
+
+
+Step 1: pop current json path nodes stack
+
+Step 2: If current Json path satisfy query add current processing token to the Result
+
+Step 3: pop current json path nodes stack if top element of the stack is a key node
+
+State before processing "]" token: ["user", "list", 0, 1]
+
+Step 1: ["user", "list", 0]
+
+Step 2: Satisfied. So add this token to the result
+
+Step 3: Not Satisfied
+
+State before processing "]" token: ["user", "list", 0]
+
+Step 1: ["user", "list"]
+
+Step 2: Satisfied. So add this token to the result
+
+Step 3: Satisfied. ["user"]
+
+
+
+
+
+
