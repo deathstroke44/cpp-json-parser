@@ -1,14 +1,11 @@
 #include "library/JsonStreaming.hh"
-
 using namespace std;
 
-
 vector<Node> currentJsonPathStack;
-map<string, string> jsonPathQueryResultsMap;
-vector<string> jsonPathQueryResultKeys;
-map<string, StreamToken> jsonPathQueryResultsLastAddedTokenMap;
+string jsonPathQueryResults = "";
+StreamToken lastAddedTokenInResult;
 vector<Node> jsonPathQueryTokenized;
-bool multiResultExist = false;
+bool multipleResultExistForThisQuery = false;
 
 void popNodeFromCurrentJsonPath() {
     if (!currentJsonPathStack.empty()) {
@@ -36,8 +33,8 @@ bool isLastNodeOfCurrentJsonPathIsIndex() {
     return !currentJsonPathStack.empty() && !currentJsonPathStack[currentJsonPathStack.size()-1].isKey;
 }
 
-bool appendingDelimiterNeeded(const StreamToken &streamToken, const string &currentKey) {
-    StreamToken lastAddedStreamToken = jsonPathQueryResultsLastAddedTokenMap[currentKey];
+bool appendingDelimiterNeededBeforeAppendingThisToken(const StreamToken &streamToken) {
+    StreamToken lastAddedStreamToken = lastAddedTokenInResult;
     if (lastAddedStreamToken.isDefault)
         return false;
     if (streamToken.tokenType == LIST_ENDED_TOKEN || streamToken.tokenType == OBJECT_ENDED_TOKEN) {
@@ -54,32 +51,26 @@ bool appendingDelimiterNeeded(const StreamToken &streamToken, const string &curr
     return false;
 }
 
-void addTokenToJsonPathQueryResult(string jsonPathConsideringQuery, StreamToken streamToken) {
-    string resultInCurrentPath = jsonPathQueryResultsMap[jsonPathConsideringQuery];
-    bool isNewKey = jsonPathQueryResultsLastAddedTokenMap[jsonPathConsideringQuery].isDefault;
-    resultInCurrentPath.append(appendingDelimiterNeeded(streamToken, jsonPathConsideringQuery) ? "," : "");
-    jsonPathQueryResultsLastAddedTokenMap[jsonPathConsideringQuery] = streamToken;
+void addTokenToJsonPathQueryResult(StreamToken streamToken) {
+    jsonPathQueryResults.append(appendingDelimiterNeededBeforeAppendingThisToken(streamToken) ? "," : "");
+    lastAddedTokenInResult = streamToken;
 
     if (streamToken.tokenType == JsonTokenType::KEY_TOKEN) {
-        resultInCurrentPath += "\"" + streamToken.value + "\"" + " : ";
+        jsonPathQueryResults += "\"" + streamToken.value + "\"" + " : ";
     } else if (streamToken.tokenType == VALUE_TOKEN) {
-        resultInCurrentPath.append(streamToken.isStringValue
+        jsonPathQueryResults.append(streamToken.isStringValue
                                    ? "\"" + streamToken.value + "\""
                                    : streamToken.value);
     } else if (streamToken.tokenType == LIST_STARTED_TOKEN) {
-        resultInCurrentPath.push_back('[');
+        jsonPathQueryResults.push_back('[');
     } else if (streamToken.tokenType == LIST_ENDED_TOKEN) {
-        resultInCurrentPath.push_back(']');
+        jsonPathQueryResults.push_back(']');
 
     } else if (streamToken.tokenType == OBJECT_STARTED_TOKEN) {
-        resultInCurrentPath.push_back('{');
+        jsonPathQueryResults.push_back('{');
     } else if (streamToken.tokenType == OBJECT_ENDED_TOKEN) {
-        resultInCurrentPath.push_back('}');
+        jsonPathQueryResults.push_back('}');
     }
-    if (isNewKey) {
-        jsonPathQueryResultKeys.push_back(jsonPathConsideringQuery);
-    }
-    jsonPathQueryResultsMap[jsonPathConsideringQuery] = resultInCurrentPath;
 }
 
 string getAppendingString(const Node &jsonPathKey) {
@@ -120,7 +111,7 @@ bool isCurrentPathSatisfyQuery() {
 void processToken(StreamToken streamToken) {
     if (streamToken.tokenType == KEY_TOKEN) {
         if (isCurrentPathSatisfyQuery()) {
-            addTokenToJsonPathQueryResult(getJsonPathConsideringQuery(), streamToken);
+            addTokenToJsonPathQueryResult(streamToken);
         }
         pushKeyInCurrentJsonPath(streamToken.value);
     }
@@ -129,7 +120,7 @@ void processToken(StreamToken streamToken) {
             incrementLastNodeIndexInCurrentJsonPath();
         }
         if (isCurrentPathSatisfyQuery()) {
-            addTokenToJsonPathQueryResult(getJsonPathConsideringQuery(), streamToken);
+            addTokenToJsonPathQueryResult(streamToken);
         }
         if (isLastNodeOfCurrentJsonPathIsKey()) {
             popNodeFromCurrentJsonPath();
@@ -140,7 +131,7 @@ void processToken(StreamToken streamToken) {
             incrementLastNodeIndexInCurrentJsonPath();
         }
         if (isCurrentPathSatisfyQuery()) {
-            addTokenToJsonPathQueryResult(getJsonPathConsideringQuery(), streamToken);
+            addTokenToJsonPathQueryResult(streamToken);
         }
     }
     else if (streamToken.tokenType == LIST_STARTED_TOKEN) {
@@ -148,14 +139,14 @@ void processToken(StreamToken streamToken) {
             incrementLastNodeIndexInCurrentJsonPath();
         }
         if (isCurrentPathSatisfyQuery()) {
-            addTokenToJsonPathQueryResult(getJsonPathConsideringQuery(), streamToken);
+            addTokenToJsonPathQueryResult(streamToken);
         }
         pushIndexInCurrentJsonPath(-1);
     }
     else if (streamToken.tokenType == LIST_ENDED_TOKEN) {
         popNodeFromCurrentJsonPath();
         if (isCurrentPathSatisfyQuery()) {
-            addTokenToJsonPathQueryResult(getJsonPathConsideringQuery(), streamToken);
+            addTokenToJsonPathQueryResult(streamToken);
         }
         if (isLastNodeOfCurrentJsonPathIsKey()) {
             popNodeFromCurrentJsonPath();
@@ -164,27 +155,18 @@ void processToken(StreamToken streamToken) {
 
     else if (streamToken.tokenType == OBJECT_ENDED_TOKEN) {
         if (isCurrentPathSatisfyQuery()) {
-            addTokenToJsonPathQueryResult(getJsonPathConsideringQuery(), streamToken);
+            addTokenToJsonPathQueryResult(streamToken);
         }
         if (isLastNodeOfCurrentJsonPathIsKey()) {
             popNodeFromCurrentJsonPath();
         }
     }
     else if (streamToken.tokenType == DOCUMENT_END_TOKEN) {
-        string finalResult;
-        for (const auto &jsonPath: jsonPathQueryResultKeys) {
-            string jsonPathValue = jsonPathQueryResultsMap[jsonPath];
-            cout << "All answers: " << jsonPath << " -> " << jsonPathValue << endl;
-            if (finalResult.length()) {
-                finalResult.push_back(',');
-            }
-            finalResult.append(jsonPathValue);
-        }
-        if (multiResultExist) {
-            finalResult = "[" + finalResult + "]";
+        if (multipleResultExistForThisQuery) {
+            jsonPathQueryResults = "[" + jsonPathQueryResults + "]";
         }
         cout << "Got value of desired key final result: " << endl
-             << finalResult << endl;
+             << jsonPathQueryResults << endl;
     }
 }
 
@@ -232,7 +214,7 @@ void processJsonPathQuery(string jsonPathQuery) {
         addKeyToJsonPathQueryProcessedList(listIndex, curr);
 
     for (auto &i: jsonPathQueryTokenized) {
-        multiResultExist = multiResultExist || (i.anyKey || i.anyIndex);
+        multipleResultExistForThisQuery = multipleResultExistForThisQuery || (i.anyKey || i.anyIndex);
     }
 }
 
