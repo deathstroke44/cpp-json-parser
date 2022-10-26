@@ -69,7 +69,7 @@ public:
 
 class Node {
 public:
-    bool isKey = false, anyIndex = false, anyKey = false;
+    bool isKey = false, anyIndex = false, anyKey = false, zeroOrMoreKey = false;
     int index;
     string key;
 
@@ -84,5 +84,46 @@ public:
         this->key = key;
         isKey = true;
         anyKey = (key.length() == 0 || key == "*");
+        zeroOrMoreKey = (key.length() == 0);
     };
+
+    // void printNode() {
+    //     cout<<"isKey: "<<isKey<<"key: "<<key<<"index: "<<index<<endl;
+    // }
+
+    bool nodeMatched(Node node) {
+        return (node.isKey && (anyKey || node.key==key)) ||
+            (!node.isKey && (anyIndex || node.index == index));
+    }
+};
+
+class DFA {
+public:
+    bool isDefault = true;
+    string jsonPath;
+    set<int> dfaCurrentStates;
+    bool indexesInCurrentJsonPathStackWhenDfaReachedAcceptStatesCanNotBeCleared = false;
+    set<int> indexesInCurrentJsonPathStackWhenDfaReachedAcceptStates;
+
+    DFA() { init(); }
+
+    DFA(string jsonPath) {
+        init();
+        this->jsonPath = jsonPath;
+        isDefault = false;
+    }
+
+    void init() {
+        jsonPath = "$";
+        dfaCurrentStates.clear();
+        indexesInCurrentJsonPathStackWhenDfaReachedAcceptStates.clear();
+    }
+
+    void clearVariablesWhichCanBeDeleted() {
+        jsonPath.clear();
+        dfaCurrentStates.clear();
+        if (!indexesInCurrentJsonPathStackWhenDfaReachedAcceptStatesCanNotBeCleared) {
+            indexesInCurrentJsonPathStackWhenDfaReachedAcceptStates.clear();
+        }
+    }
 };

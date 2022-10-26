@@ -6,6 +6,21 @@ file.close()
 relative_path = 'tests/Json files/'
 tests = [
     {
+        'fileName': 'more-case.json',
+        'query': '$..*'
+    },
+    {
+        'fileName': 'more-case.json',
+        'query': '$..user'
+    },{
+        'fileName': 'more-case.json',
+        'query': '$..*'
+    },
+    {
+        'fileName': 'more-case.json',
+        'query': '$..name'
+    },
+    {
         'fileName': 'code-test.json',
         'query': '$.skills'
     },
