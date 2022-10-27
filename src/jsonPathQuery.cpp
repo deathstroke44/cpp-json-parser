@@ -14,7 +14,8 @@ Node topNodeInCurrentJsonPathStack();
 
 //............................UpDating and displaying Results....................................................................
 
-bool appendingDelimiterNeededBeforeAppendingStreamTokenInResult(const string& jsonPath, const StreamToken &streamToken) {
+bool
+appendingDelimiterNeededBeforeAppendingStreamTokenInResult(const string &jsonPath, const StreamToken &streamToken) {
     StreamToken lastAddedStreamTokenInThisJsonPath = lastAddedTokenInResultMap[jsonPath];
     if (lastAddedStreamTokenInThisJsonPath.isCreatedByMe) return false;
     if (streamToken.tokenType == LIST_ENDED_TOKEN || streamToken.tokenType == OBJECT_ENDED_TOKEN) return false;
@@ -28,29 +29,30 @@ bool appendingDelimiterNeededBeforeAppendingStreamTokenInResult(const string& js
     return false;
 }
 
-void addStreamTokenInJsonPathQueryResult(const string& jsonPath, const StreamToken& streamToken) {
+void addStreamTokenInJsonPathQueryResult(const string &jsonPath, const StreamToken &streamToken) {
     string jsonPathQueryResultInThisJsonPath = jsonPathQueryResultsMap[jsonPath];
     jsonPathQueryResultInThisJsonPath.append(
             appendingDelimiterNeededBeforeAppendingStreamTokenInResult(jsonPath, streamToken) ? "," : "");
     lastAddedTokenInResultMap[jsonPath] = streamToken;
-    if (streamToken.tokenType == JsonTokenType::KEY_TOKEN) {
+    JsonTokenType jsonTokenType = streamToken.tokenType;
+    if (jsonTokenType == JsonTokenType::KEY_TOKEN) {
         jsonPathQueryResultInThisJsonPath += "\"" + streamToken.value + "\"" + " : ";
-    } else if (streamToken.tokenType == VALUE_TOKEN) {
+    } else if (jsonTokenType == VALUE_TOKEN) {
         jsonPathQueryResultInThisJsonPath.append(
                 streamToken.isStringValue ? "\"" + streamToken.value + "\"" : streamToken.value);
-    } else if (streamToken.tokenType == LIST_STARTED_TOKEN) {
+    } else if (jsonTokenType == LIST_STARTED_TOKEN) {
         jsonPathQueryResultInThisJsonPath.push_back('[');
-    } else if (streamToken.tokenType == LIST_ENDED_TOKEN) {
+    } else if (jsonTokenType == LIST_ENDED_TOKEN) {
         jsonPathQueryResultInThisJsonPath.push_back(']');
-    } else if (streamToken.tokenType == OBJECT_STARTED_TOKEN) {
+    } else if (jsonTokenType == OBJECT_STARTED_TOKEN) {
         jsonPathQueryResultInThisJsonPath.push_back('{');
-    } else if (streamToken.tokenType == OBJECT_ENDED_TOKEN) {
+    } else if (jsonTokenType == OBJECT_ENDED_TOKEN) {
         jsonPathQueryResultInThisJsonPath.push_back('}');
     }
     jsonPathQueryResultsMap[jsonPath] = jsonPathQueryResultInThisJsonPath;
 }
 
-void updateResultIfJsonPathQuerySatisfy(const StreamToken& streamToken) {
+void updateResultIfJsonPathQuerySatisfy(const StreamToken &streamToken) {
     DFAState dfsState = dpDfaState[currentJsonPath];
     string jsonPath;
     if (!dfsState.isNotCreatedByMe) {
@@ -76,21 +78,22 @@ void updateResultIfJsonPathQuerySatisfy(const StreamToken& streamToken) {
 
 void printJsonPathQueryResult() {
     string finalResult;
-    for (const auto& result: jsonPathQueryResultsMap) {
+    for (const auto &result: jsonPathQueryResultsMap) {
         if (finalResult.length()) finalResult.push_back(',');
         finalResult.append(result.second);
     }
     if (multipleResultExistForThisQuery) finalResult = "[" + finalResult + "]";
     cout << "Got value of desired key final result: " << endl
          << finalResult << endl;
-    for (const auto& result: jsonPathQueryResultsMap) {
+    for (const auto &result: jsonPathQueryResultsMap) {
         cout << "All answers: " << result.first << " -> " << result.second << endl;;
     }
 }
 
 //........................................Initiate state of current json path's dfa from previous path dfa an update dfa accordingly
 
-void initiateDfaOfCurrentJsonPathFromDfaOfPreviousJsonPath(DFAState &dfaOfPreviousJsonPath, DFAState &dfaOfCurrentJSonPath) {
+void
+initiateDfaOfCurrentJsonPathFromDfaOfPreviousJsonPath(DFAState &dfaOfPreviousJsonPath, DFAState &dfaOfCurrentJSonPath) {
     if (!dfaOfPreviousJsonPath.automationCurrentStates.empty()) {
         for (auto itr: dfaOfPreviousJsonPath.lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState) {
             dfaOfCurrentJSonPath.lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState.insert(itr);
@@ -101,7 +104,8 @@ void initiateDfaOfCurrentJsonPathFromDfaOfPreviousJsonPath(DFAState &dfaOfPrevio
     }
 }
 
-void updateAutomationStatesAndFinalStatesOfNewDfaUsingPreviousDfa(DFAState &previousDfaState, DFAState &newDfaState, const Node& node) {
+void updateAutomationStatesAndFinalStatesOfNewDfaUsingPreviousDfa(DFAState &previousDfaState, DFAState &newDfaState,
+                                                                  const Node &node) {
     int acceptStateOfDfa = jsonPathQueryTokenized.size() - 1;
     int currentProcessingIndex = currentJsonPathStack.size() - 1;
     for (auto reachedState: previousDfaState.automationCurrentStates) {
@@ -114,22 +118,23 @@ void updateAutomationStatesAndFinalStatesOfNewDfaUsingPreviousDfa(DFAState &prev
                 newDfaState.updateCurrentAutomationStates(reachedState + 1, acceptStateOfDfa, currentProcessingIndex);
             }
             if (reachedState + 2 <= acceptStateOfDfa && jsonPathQueryTokenized[reachedState + 1].recursiveDescent
-                    && jsonPathQueryTokenized[reachedState + 2].nodeMatched(node)) {
+                && jsonPathQueryTokenized[reachedState + 2].nodeMatched(node)) {
                 newDfaState.updateCurrentAutomationStates(reachedState + 2, acceptStateOfDfa, currentProcessingIndex);
             }
         }
     }
 }
 
-void createDfaStateOfCurrentJsonPathFromDfaStateOfPreviousJsonPath(const string& previousJsonPath) {
+void createDfaStateOfCurrentJsonPathFromDfaStateOfPreviousJsonPath(const string &previousJsonPath) {
     DFAState dfaStateOfPreviousJsonPath = dpDfaState[previousJsonPath];
     if (!dfaStateOfPreviousJsonPath.isNotCreatedByMe) {
         DFAState dfaOfCurrentJsonPath(currentJsonPath);
         initiateDfaOfCurrentJsonPathFromDfaOfPreviousJsonPath(dfaStateOfPreviousJsonPath, dfaOfCurrentJsonPath);
         Node newNodeAddedInJsonPath = topNodeInCurrentJsonPathStack();
         if (!dfaStateOfPreviousJsonPath.automationCurrentStates.empty())
-            updateAutomationStatesAndFinalStatesOfNewDfaUsingPreviousDfa(dfaStateOfPreviousJsonPath, dfaOfCurrentJsonPath,
-                                                                    newNodeAddedInJsonPath);
+            updateAutomationStatesAndFinalStatesOfNewDfaUsingPreviousDfa(dfaStateOfPreviousJsonPath,
+                                                                         dfaOfCurrentJsonPath,
+                                                                         newNodeAddedInJsonPath);
         dpDfaState[currentJsonPath] = dfaOfCurrentJsonPath;
     }
 }
@@ -161,7 +166,7 @@ void popNodeFromCurrentJsonPathStack() {
     }
 }
 
-void pushKeyNodeInCurrentJsonPathStack(const string& key) {
+void pushKeyNodeInCurrentJsonPathStack(const string &key) {
     string previousJsonPath = "" + currentJsonPath;
     currentJsonPathStack.emplace_back(key, true);
     currentJsonPath.append("." + key);
@@ -186,69 +191,66 @@ void incrementIndexOfTopNodeInCurrentJsonPathStack() {
 
 //...........................Event handler and processing...............................................................
 
-void processToken(const StreamToken& streamToken) {
-    if (streamToken.tokenType == KEY_TOKEN) {
+void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent) {
+    StreamToken streamToken = jsonStreamEvent.getStreamToken();
+    JsonTokenType jsonTokenType = streamToken.tokenType;
+    if (jsonTokenType == KEY_TOKEN) {
         updateResultIfJsonPathQuerySatisfy(streamToken);
         pushKeyNodeInCurrentJsonPathStack(streamToken.value);
-    } else if (streamToken.tokenType == VALUE_TOKEN) {
+    } else if (jsonTokenType == VALUE_TOKEN) {
         if (isLastNodeOfCurrentJsonPathIsIndexNode()) incrementIndexOfTopNodeInCurrentJsonPathStack();
         updateResultIfJsonPathQuerySatisfy(streamToken);
         if (isLastNodeOfCurrentJsonPathIsKeyNode()) popNodeFromCurrentJsonPathStack();
-    } else if (streamToken.tokenType == OBJECT_STARTED_TOKEN) {
+    } else if (jsonTokenType == OBJECT_STARTED_TOKEN) {
         if (isLastNodeOfCurrentJsonPathIsIndexNode()) incrementIndexOfTopNodeInCurrentJsonPathStack();
         updateResultIfJsonPathQuerySatisfy(streamToken);
-    } else if (streamToken.tokenType == LIST_STARTED_TOKEN) {
+    } else if (jsonTokenType == LIST_STARTED_TOKEN) {
         if (isLastNodeOfCurrentJsonPathIsIndexNode()) incrementIndexOfTopNodeInCurrentJsonPathStack();
         updateResultIfJsonPathQuerySatisfy(streamToken);
         pushIndexNodeInCurrentJsonPathStack(-1);
-    } else if (streamToken.tokenType == LIST_ENDED_TOKEN) {
+    } else if (jsonTokenType == LIST_ENDED_TOKEN) {
         popNodeFromCurrentJsonPathStack();
         updateResultIfJsonPathQuerySatisfy(streamToken);
         if (isLastNodeOfCurrentJsonPathIsKeyNode()) popNodeFromCurrentJsonPathStack();
-    } else if (streamToken.tokenType == OBJECT_ENDED_TOKEN) {
+    } else if (jsonTokenType == OBJECT_ENDED_TOKEN) {
         updateResultIfJsonPathQuerySatisfy(streamToken);
         if (isLastNodeOfCurrentJsonPathIsKeyNode()) popNodeFromCurrentJsonPathStack();
-    } else if (streamToken.tokenType == DOCUMENT_END_TOKEN) printJsonPathQueryResult();
-}
-
-void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent) {
-    processToken(jsonStreamEvent.getStreamToken());
+    } else if (jsonTokenType == DOCUMENT_END_TOKEN) printJsonPathQueryResult();
 }
 
 //..................................Processing Json path query..............................................
 
 void processJsonPathQuery(string jsonPathQuery) {
-    size_t found = jsonPathQuery.find('.'),LeftBracketFound,RightBracketFound;
+    size_t found = jsonPathQuery.find('.'), LeftBracketFound, RightBracketFound;
     vector<int> occurrenceIndexesOfDotInQuery;
-    jsonPathQueryTokenized.emplace_back("$", true); 
-    while (found != string::npos)
-    {
+    jsonPathQueryTokenized.emplace_back("$", true);
+    while (found != string::npos) {
         occurrenceIndexesOfDotInQuery.push_back(found);
-        found = jsonPathQuery.find('.', found+1);
+        found = jsonPathQuery.find('.', found + 1);
     }
-    for(int i=0;i<occurrenceIndexesOfDotInQuery.size();i++) {
+    for (int i = 0; i < occurrenceIndexesOfDotInQuery.size(); i++) {
         int startIndex = occurrenceIndexesOfDotInQuery[i] + 1;
         int endIndex = jsonPathQuery.size() - 1;
-        if (i+1<=occurrenceIndexesOfDotInQuery.size() -1) {
-            endIndex = occurrenceIndexesOfDotInQuery[i+1] - 1;
+        if (i + 1 <= occurrenceIndexesOfDotInQuery.size() - 1) {
+            endIndex = occurrenceIndexesOfDotInQuery[i + 1] - 1;
         }
         string str1 = "";
-        if(startIndex<=endIndex) {
+        if (startIndex <= endIndex) {
             str1 = jsonPathQuery.substr(startIndex, endIndex - startIndex + 1);
         }
         LeftBracketFound = str1.find('[');
         int keyEndIndex = -1;
         while (LeftBracketFound != string::npos) {
-            RightBracketFound = str1.find(']',LeftBracketFound + 1);
+            RightBracketFound = str1.find(']', LeftBracketFound + 1);
             if (RightBracketFound != string::npos) {
                 if (keyEndIndex == -1) {
                     keyEndIndex = LeftBracketFound;
                     jsonPathQueryTokenized.emplace_back(str1.substr(0, LeftBracketFound), true);
                 }
-                jsonPathQueryTokenized.emplace_back(str1.substr(LeftBracketFound + 1, (RightBracketFound - 1) - (LeftBracketFound + 1) + 1), false);
+                jsonPathQueryTokenized.emplace_back(
+                        str1.substr(LeftBracketFound + 1, (RightBracketFound - 1) - (LeftBracketFound + 1) + 1), false);
                 LeftBracketFound = str1.find('[', RightBracketFound + 1);
-            }
-            else break;
+            } else break;
         }
         if (keyEndIndex == -1) {
             jsonPathQueryTokenized.emplace_back(str1, true);
