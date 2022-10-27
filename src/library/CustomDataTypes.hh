@@ -126,4 +126,9 @@ public:
             indexesInCurrentJsonPathStackWhenDfaReachedAcceptStates.clear();
         }
     }
+
+    void updateReachStates(int state, int acceptState, int currentProcessingIndexInJsonPathStack) {
+        if (state == acceptState) indexesInCurrentJsonPathStackWhenDfaReachedAcceptStates.insert(currentProcessingIndexInJsonPathStack);
+        else dfaCurrentStates.insert(state);
+    }
 };

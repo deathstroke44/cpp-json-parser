@@ -13,33 +13,20 @@ map<string, DFA> dpDfa;
 void addTokenToJsonPathQueryResultV1(const string& jsonPath, const StreamToken& streamToken);
 
 void findReachedStatesAndFinalStatesOfNewDfaUsingPreviousDfa(DFA &previousDfaState, DFA &newDfaState, const Node& node) {
-    int jsonPathQueryTokenizedSize = jsonPathQueryTokenized.size();
-    int currentJsonPathStackSize = currentJsonPathStack.size();
+    int acceptStateOfDfa = jsonPathQueryTokenized.size() - 1;
+    int currentProcessingIndex = currentJsonPathStack.size() - 1;
     for (auto reachedState: previousDfaState.dfaCurrentStates) {
-        if (reachedState >= jsonPathQueryTokenizedSize - 1) continue;
-        if (reachedState + 1 <= jsonPathQueryTokenizedSize - 1) {
-            Node currentState = jsonPathQueryTokenized[reachedState];
-            if (currentState.zeroOrMoreKey) {
-                if (reachedState == jsonPathQueryTokenizedSize - 1) {
-                    newDfaState.indexesInCurrentJsonPathStackWhenDfaReachedAcceptStates.insert(
-                            currentJsonPathStackSize - 1);
-                } else newDfaState.dfaCurrentStates.insert(reachedState);
+        if (reachedState >= acceptStateOfDfa) continue;
+        if (reachedState + 1 <= acceptStateOfDfa) {
+            if (jsonPathQueryTokenized[reachedState].zeroOrMoreKey) {
+                newDfaState.updateReachStates(reachedState, acceptStateOfDfa, currentProcessingIndex);
             }
-            Node nextState = jsonPathQueryTokenized[reachedState + 1];
-            if (nextState.nodeMatched(node)) {
-                if (reachedState + 1 == jsonPathQueryTokenizedSize - 1) {
-                    newDfaState.indexesInCurrentJsonPathStackWhenDfaReachedAcceptStates.insert(
-                            currentJsonPathStackSize - 1);
-                } else newDfaState.dfaCurrentStates.insert(reachedState + 1);
+            if (jsonPathQueryTokenized[reachedState + 1].nodeMatched(node)) {
+                newDfaState.updateReachStates(reachedState + 1, acceptStateOfDfa, currentProcessingIndex);
             }
-            if (reachedState + 2 <= jsonPathQueryTokenizedSize - 1 && nextState.zeroOrMoreKey) {
-                Node nextNextState = jsonPathQueryTokenized[reachedState + 2];
-                if (nextNextState.nodeMatched(node)) {
-                    if (reachedState + 2 == jsonPathQueryTokenizedSize - 1) {
-                        newDfaState.indexesInCurrentJsonPathStackWhenDfaReachedAcceptStates.insert(
-                                currentJsonPathStackSize - 1);
-                    } else newDfaState.dfaCurrentStates.insert(reachedState + 2);
-                }
+            if (reachedState + 2 <= acceptStateOfDfa && jsonPathQueryTokenized[reachedState + 1].zeroOrMoreKey
+                    && jsonPathQueryTokenized[reachedState + 2].nodeMatched(node)) {
+                newDfaState.updateReachStates(reachedState + 2, acceptStateOfDfa, currentProcessingIndex);
             }
         }
     }
