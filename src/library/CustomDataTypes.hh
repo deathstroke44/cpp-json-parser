@@ -97,17 +97,17 @@ public:
     }
 };
 
-class DFA {
+class DFAState {
 public:
     bool isDefault = true;
     string jsonPath;
-    set<int> dfaCurrentStates;
+    set<int> automationCurrentStates;
     bool indexesInCurrentJsonPathStackWhenDfaReachedAcceptStatesCanNotBeCleared = false;
-    set<int> indexesInCurrentJsonPathStackWhenDfaReachedAcceptStates;
+    set<int> lengthOfCurrentJsonPathStackWhenDfaReachedAcceptState;
 
-    DFA() { init(); }
+    DFAState() { init(); }
 
-    DFA(string jsonPath) {
+    DFAState(string jsonPath) {
         init();
         this->jsonPath = jsonPath;
         isDefault = false;
@@ -115,20 +115,20 @@ public:
 
     void init() {
         jsonPath = "$";
-        dfaCurrentStates.clear();
-        indexesInCurrentJsonPathStackWhenDfaReachedAcceptStates.clear();
+        automationCurrentStates.clear();
+        lengthOfCurrentJsonPathStackWhenDfaReachedAcceptState.clear();
     }
 
     void clearVariablesWhichCanBeDeleted() {
         jsonPath.clear();
-        dfaCurrentStates.clear();
+        automationCurrentStates.clear();
         if (!indexesInCurrentJsonPathStackWhenDfaReachedAcceptStatesCanNotBeCleared) {
-            indexesInCurrentJsonPathStackWhenDfaReachedAcceptStates.clear();
+            lengthOfCurrentJsonPathStackWhenDfaReachedAcceptState.clear();
         }
     }
 
-    void updateReachStates(int state, int acceptState, int currentProcessingIndexInJsonPathStack) {
-        if (state == acceptState) indexesInCurrentJsonPathStackWhenDfaReachedAcceptStates.insert(currentProcessingIndexInJsonPathStack);
-        else dfaCurrentStates.insert(state);
+    void updateCurrentAutomationStates(int state, int acceptState, int currentProcessingIndexInJsonPathStack) {
+        if (state == acceptState) lengthOfCurrentJsonPathStackWhenDfaReachedAcceptState.insert(currentProcessingIndexInJsonPathStack);
+        else automationCurrentStates.insert(state);
     }
 };
