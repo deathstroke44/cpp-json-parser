@@ -90,14 +90,14 @@ void printJsonPathQueryResult() {
 
 //........................................Initiate state of current json path's dfa from previous path dfa an update dfa accordingly
 
-void initiateDfaOfCurrentJsonPathFromDfaOfPreviousJsonPath(DFAState &dfaOfCurrentJsonPath, DFAState &dfaOfPreviousJSonPath) {
-    if (!dfaOfCurrentJsonPath.automationCurrentStates.empty()) {
-        for (auto itr: dfaOfCurrentJsonPath.lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState) {
-            dfaOfPreviousJSonPath.lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState.insert(itr);
+void initiateDfaOfCurrentJsonPathFromDfaOfPreviousJsonPath(DFAState &dfaOfPreviousJsonPath, DFAState &dfaOfCurrentJSonPath) {
+    if (!dfaOfPreviousJsonPath.automationCurrentStates.empty()) {
+        for (auto itr: dfaOfPreviousJsonPath.lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState) {
+            dfaOfCurrentJSonPath.lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState.insert(itr);
         }
     } else {
-        dfaOfPreviousJSonPath.lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState = dfaOfCurrentJsonPath.lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState;
-        dfaOfPreviousJSonPath.canClearLengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState = true;
+        dfaOfCurrentJSonPath.lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState = dfaOfPreviousJsonPath.lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState;
+        dfaOfCurrentJSonPath.canClearLengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState = true;
     }
 }
 
