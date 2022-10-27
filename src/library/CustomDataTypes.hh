@@ -69,31 +69,34 @@ public:
 
 class Node {
 public:
-    bool isKeyNode = false, anyIndex = false, anyKey = false, zeroOrMoreKey = false;
+    bool isKeyNode = false;
+    bool wildcard = false;
+    bool recursiveDescent = false;
     int index;
     string key;
 
     Node() = default;
+    
+    Node(string value, bool isKeyNode) {
+        this->isKeyNode = isKeyNode;
+        if (isKeyNode) {
+            this->key = value;
+            wildcard = (key == "*");
+            recursiveDescent = (key.length() == 0);
+        }
+        else {
+            if (value=="*") wildcard = true;
+            else this->index = stoi(value);
+        }
+    }
 
     explicit Node(int index) {
         this->index = index;
-        anyIndex = (index == -2);
     };
-
-    Node(string key, bool dummy) {
-        this->key = key;
-        isKeyNode = true;
-        anyKey = (key.length() == 0 || key == "*");
-        zeroOrMoreKey = (key.length() == 0);
-    };
-
-    // void printNode() {
-    //     cout<<"isKey: "<<isKey<<"key: "<<key<<"index: "<<index<<endl;
-    // }
 
     bool nodeMatched(Node node) {
-        return (node.isKeyNode && (anyKey || node.key==key)) ||
-            (!node.isKeyNode && (anyIndex || node.index == index));
+        return (node.isKeyNode && (wildcard || recursiveDescent || node.key==key)) ||
+            (!node.isKeyNode && (wildcard || node.index == index));
     }
 };
 

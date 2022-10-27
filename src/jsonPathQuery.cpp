@@ -107,13 +107,13 @@ void findReachedStatesAndFinalStatesOfNewDfaUsingPreviousDfa(DFAState &previousD
     for (auto reachedState: previousDfaState.automationCurrentStates) {
         if (reachedState >= acceptStateOfDfa) continue;
         if (reachedState + 1 <= acceptStateOfDfa) {
-            if (jsonPathQueryTokenized[reachedState].zeroOrMoreKey) {
+            if (jsonPathQueryTokenized[reachedState].recursiveDescent) {
                 newDfaState.updateCurrentAutomationStates(reachedState, acceptStateOfDfa, currentProcessingIndex);
             }
             if (jsonPathQueryTokenized[reachedState + 1].nodeMatched(node)) {
                 newDfaState.updateCurrentAutomationStates(reachedState + 1, acceptStateOfDfa, currentProcessingIndex);
             }
-            if (reachedState + 2 <= acceptStateOfDfa && jsonPathQueryTokenized[reachedState + 1].zeroOrMoreKey
+            if (reachedState + 2 <= acceptStateOfDfa && jsonPathQueryTokenized[reachedState + 1].recursiveDescent
                     && jsonPathQueryTokenized[reachedState + 2].nodeMatched(node)) {
                 newDfaState.updateCurrentAutomationStates(reachedState + 2, acceptStateOfDfa, currentProcessingIndex);
             }
@@ -218,7 +218,7 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
 //..................................Processing Json path query..............................................
 
 void addKeyToJsonPathQueryProcessedList(bool listIndex, const string& val) {
-    if (listIndex) jsonPathQueryTokenized.emplace_back(val == "*" ? -2 : stoi(val));
+    if (listIndex) jsonPathQueryTokenized.emplace_back(val, false);
     else jsonPathQueryTokenized.emplace_back(val, true);
 }
 
@@ -251,8 +251,8 @@ void processJsonPathQuery(string jsonPathQuery) {
     if (curr.length())
         addKeyToJsonPathQueryProcessedList(listIndex, curr);
 
-    for (auto &i: jsonPathQueryTokenized) {
-        multipleResultExistForThisQuery = multipleResultExistForThisQuery || (i.anyKey || i.anyIndex);
+    for (auto &token: jsonPathQueryTokenized) {
+        multipleResultExistForThisQuery = multipleResultExistForThisQuery || (token.recursiveDescent || token.wildcard);
     }
 }
 
