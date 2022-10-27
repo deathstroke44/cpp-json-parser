@@ -217,40 +217,43 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
 
 //..................................Processing Json path query..............................................
 
-void addKeyToJsonPathQueryProcessedList(bool listIndex, const string& val) {
-    if (listIndex) jsonPathQueryTokenized.emplace_back(val, false);
-    else jsonPathQueryTokenized.emplace_back(val, true);
-}
-
 void processJsonPathQuery(string jsonPathQuery) {
-    string curr;
-    bool listIndex = false;
-    int lastListEnd = -1, lastDotIndex = -1;
-
-    for (int i = 0; i < jsonPathQuery.size(); i++) {
-        if (jsonPathQuery[i] == '.') {
-            if (i - 1 != lastListEnd) {
-                addKeyToJsonPathQueryProcessedList(listIndex, curr);
-                lastDotIndex = i;
-            }
-            curr.clear();
-        } else if (jsonPathQuery[i] == '[') {
-            if (i - 1 != lastDotIndex && i - 1 != lastListEnd) {
-                addKeyToJsonPathQueryProcessedList(listIndex, curr);
-            }
-            listIndex = true;
-            curr.clear();
-        } else if (jsonPathQuery[i] == ']') {
-            addKeyToJsonPathQueryProcessedList(listIndex, curr);
-            listIndex = false;
-            curr.clear();
-            lastListEnd = i;
-        } else
-            curr.push_back(jsonPathQuery[i]);
+    size_t found = jsonPathQuery.find('.'),LeftBracketFound,RightBracketFound;
+    vector<int> occurrenceIndexesOfDotInQuery;
+    jsonPathQueryTokenized.emplace_back("$", true); 
+    while (found != string::npos)
+    {
+        occurrenceIndexesOfDotInQuery.push_back(found);
+        found = jsonPathQuery.find('.', found+1);
     }
-    if (curr.length())
-        addKeyToJsonPathQueryProcessedList(listIndex, curr);
-
+    for(int i=0;i<occurrenceIndexesOfDotInQuery.size();i++) {
+        int startIndex = occurrenceIndexesOfDotInQuery[i] + 1;
+        int endIndex = jsonPathQuery.size() - 1;
+        if (i+1<=occurrenceIndexesOfDotInQuery.size() -1) {
+            endIndex = occurrenceIndexesOfDotInQuery[i+1] - 1;
+        }
+        string str1 = "";
+        if(startIndex<=endIndex) {
+            str1 = jsonPathQuery.substr(startIndex, endIndex - startIndex + 1);
+        }
+        LeftBracketFound = str1.find('[');
+        int keyEndIndex = -1;
+        while (LeftBracketFound != string::npos) {
+            RightBracketFound = str1.find(']',LeftBracketFound + 1);
+            if (RightBracketFound != string::npos) {
+                if (keyEndIndex == -1) {
+                    keyEndIndex = LeftBracketFound;
+                    jsonPathQueryTokenized.emplace_back(str1.substr(0, LeftBracketFound), true);
+                }
+                jsonPathQueryTokenized.emplace_back(str1.substr(LeftBracketFound + 1, (RightBracketFound - 1) - (LeftBracketFound + 1) + 1), false);
+                LeftBracketFound = str1.find('[', RightBracketFound + 1);
+            }
+            else break;
+        }
+        if (keyEndIndex == -1) {
+            jsonPathQueryTokenized.emplace_back(str1, true);
+        }
+    }
     for (auto &token: jsonPathQueryTokenized) {
         multipleResultExistForThisQuery = multipleResultExistForThisQuery || (token.recursiveDescent || token.wildcard);
     }
