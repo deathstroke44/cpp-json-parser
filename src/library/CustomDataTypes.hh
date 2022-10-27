@@ -53,13 +53,13 @@ enum JsonTokenType {
 class StreamToken {
 public:
     JsonTokenType tokenType;
-    bool isDefault = true;
+    bool isCreatedByMe = true;
     bool isStringValue = false;
     string value;
 
     StreamToken(JsonTokenType _token_type, string _value, bool _isStringValue = false) : tokenType(_token_type),
                                                                                          value(_value),
-                                                                                         isDefault(false),
+                                                                                         isCreatedByMe(false),
                                                                                          isStringValue(
                                                                                                  _isStringValue) {};
 
@@ -69,7 +69,7 @@ public:
 
 class Node {
 public:
-    bool isKey = false, anyIndex = false, anyKey = false, zeroOrMoreKey = false;
+    bool isKeyNode = false, anyIndex = false, anyKey = false, zeroOrMoreKey = false;
     int index;
     string key;
 
@@ -82,7 +82,7 @@ public:
 
     Node(string key, bool dummy) {
         this->key = key;
-        isKey = true;
+        isKeyNode = true;
         anyKey = (key.length() == 0 || key == "*");
         zeroOrMoreKey = (key.length() == 0);
     };
@@ -92,43 +92,48 @@ public:
     // }
 
     bool nodeMatched(Node node) {
-        return (node.isKey && (anyKey || node.key==key)) ||
-            (!node.isKey && (anyIndex || node.index == index));
+        return (node.isKeyNode && (anyKey || node.key==key)) ||
+            (!node.isKeyNode && (anyIndex || node.index == index));
     }
 };
 
 class DFAState {
 public:
-    bool isDefault = true;
+    bool isNotCreatedByMe = true;
     string jsonPath;
     set<int> automationCurrentStates;
-    bool indexesInCurrentJsonPathStackWhenDfaReachedAcceptStatesCanNotBeCleared = false;
-    set<int> lengthOfCurrentJsonPathStackWhenDfaReachedAcceptState;
+    bool canClearLengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState = false;
+    set<int> lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState;
 
     DFAState() { init(); }
 
     DFAState(string jsonPath) {
         init();
         this->jsonPath = jsonPath;
-        isDefault = false;
+        isNotCreatedByMe = false;
     }
 
     void init() {
         jsonPath = "$";
         automationCurrentStates.clear();
-        lengthOfCurrentJsonPathStackWhenDfaReachedAcceptState.clear();
+        lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState.clear();
     }
 
     void clearVariablesWhichCanBeDeleted() {
         jsonPath.clear();
         automationCurrentStates.clear();
-        if (!indexesInCurrentJsonPathStackWhenDfaReachedAcceptStatesCanNotBeCleared) {
-            lengthOfCurrentJsonPathStackWhenDfaReachedAcceptState.clear();
+        if (!canClearLengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState) {
+            lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState.clear();
         }
     }
 
     void updateCurrentAutomationStates(int state, int acceptState, int currentProcessingIndexInJsonPathStack) {
-        if (state == acceptState) lengthOfCurrentJsonPathStackWhenDfaReachedAcceptState.insert(currentProcessingIndexInJsonPathStack);
+        if (state == acceptState) lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState.insert(currentProcessingIndexInJsonPathStack);
         else automationCurrentStates.insert(state);
+    }
+
+    bool valueOfJsonPathUptoIthIndexWillBeAddedInResult(int i) {
+        return lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState.find(i) !=
+                lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState.end();
     }
 };
