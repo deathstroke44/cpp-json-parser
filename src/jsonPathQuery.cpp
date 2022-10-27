@@ -14,7 +14,7 @@ Node topNodeInCurrentJsonPathStack();
 
 //............................UpDating and displaying Results....................................................................
 
-bool appendingDelimiterNeededBeforeAppendingStreamToken(const string& jsonPath, const StreamToken &streamToken) {
+bool appendingDelimiterNeededBeforeAppendingStreamTokenInResult(const string& jsonPath, const StreamToken &streamToken) {
     StreamToken lastAddedStreamTokenInThisJsonPath = lastAddedTokenInResultMap[jsonPath];
     if (lastAddedStreamTokenInThisJsonPath.isCreatedByMe) return false;
     if (streamToken.tokenType == LIST_ENDED_TOKEN || streamToken.tokenType == OBJECT_ENDED_TOKEN) return false;
@@ -31,7 +31,7 @@ bool appendingDelimiterNeededBeforeAppendingStreamToken(const string& jsonPath, 
 void addStreamTokenInJsonPathQueryResult(const string& jsonPath, const StreamToken& streamToken) {
     string jsonPathQueryResultInThisJsonPath = jsonPathQueryResultsMap[jsonPath];
     jsonPathQueryResultInThisJsonPath.append(
-            appendingDelimiterNeededBeforeAppendingStreamToken(jsonPath, streamToken) ? "," : "");
+            appendingDelimiterNeededBeforeAppendingStreamTokenInResult(jsonPath, streamToken) ? "," : "");
     lastAddedTokenInResultMap[jsonPath] = streamToken;
     if (streamToken.tokenType == JsonTokenType::KEY_TOKEN) {
         jsonPathQueryResultInThisJsonPath += "\"" + streamToken.value + "\"" + " : ";
@@ -101,7 +101,7 @@ void initiateDfaOfCurrentJsonPathFromDfaOfPreviousJsonPath(DFAState &dfaOfPrevio
     }
 }
 
-void findReachedStatesAndFinalStatesOfNewDfaUsingPreviousDfa(DFAState &previousDfaState, DFAState &newDfaState, const Node& node) {
+void updateAutomationStatesAndFinalStatesOfNewDfaUsingPreviousDfa(DFAState &previousDfaState, DFAState &newDfaState, const Node& node) {
     int acceptStateOfDfa = jsonPathQueryTokenized.size() - 1;
     int currentProcessingIndex = currentJsonPathStack.size() - 1;
     for (auto reachedState: previousDfaState.automationCurrentStates) {
@@ -121,14 +121,14 @@ void findReachedStatesAndFinalStatesOfNewDfaUsingPreviousDfa(DFAState &previousD
     }
 }
 
-void createDfaOfCurrentJsonPathFromDfaOfPreviousJsonPath(const string& previousJsonPath) {
+void createDfaStateOfCurrentJsonPathFromDfaStateOfPreviousJsonPath(const string& previousJsonPath) {
     DFAState dfaStateOfPreviousJsonPath = dpDfaState[previousJsonPath];
     if (!dfaStateOfPreviousJsonPath.isNotCreatedByMe) {
         DFAState dfaOfCurrentJsonPath(currentJsonPath);
         initiateDfaOfCurrentJsonPathFromDfaOfPreviousJsonPath(dfaStateOfPreviousJsonPath, dfaOfCurrentJsonPath);
         Node newNodeAddedInJsonPath = topNodeInCurrentJsonPathStack();
         if (!dfaStateOfPreviousJsonPath.automationCurrentStates.empty())
-            findReachedStatesAndFinalStatesOfNewDfaUsingPreviousDfa(dfaStateOfPreviousJsonPath, dfaOfCurrentJsonPath,
+            updateAutomationStatesAndFinalStatesOfNewDfaUsingPreviousDfa(dfaStateOfPreviousJsonPath, dfaOfCurrentJsonPath,
                                                                     newNodeAddedInJsonPath);
         dpDfaState[currentJsonPath] = dfaOfCurrentJsonPath;
     }
@@ -165,14 +165,14 @@ void pushKeyNodeInCurrentJsonPathStack(const string& key) {
     string previousJsonPath = "" + currentJsonPath;
     currentJsonPathStack.emplace_back(key, true);
     currentJsonPath.append("." + key);
-    createDfaOfCurrentJsonPathFromDfaOfPreviousJsonPath(previousJsonPath);
+    createDfaStateOfCurrentJsonPathFromDfaStateOfPreviousJsonPath(previousJsonPath);
 }
 
 void pushIndexNodeInCurrentJsonPathStack(int index) {
     string previousJsonPath = "" + currentJsonPath;
     currentJsonPathStack.emplace_back(index);
     currentJsonPath.append("[" + to_string(index) + "]");
-    createDfaOfCurrentJsonPathFromDfaOfPreviousJsonPath(previousJsonPath);
+    createDfaStateOfCurrentJsonPathFromDfaStateOfPreviousJsonPath(previousJsonPath);
 }
 
 void incrementIndexOfTopNodeInCurrentJsonPathStack() {
@@ -181,7 +181,7 @@ void incrementIndexOfTopNodeInCurrentJsonPathStack() {
     string previousJsonPath = currentJsonPath + "";
     currentJsonPathStack[currentJsonPathStack.size() - 1].index++;
     currentJsonPath.append("[" + to_string(topNodeInCurrentJsonPathStack().index) + "]");
-    createDfaOfCurrentJsonPathFromDfaOfPreviousJsonPath(previousJsonPath);
+    createDfaStateOfCurrentJsonPathFromDfaStateOfPreviousJsonPath(previousJsonPath);
 }
 
 //...........................Event handler and processing...............................................................
