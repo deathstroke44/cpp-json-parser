@@ -15,7 +15,7 @@ Node getLastNodeOfCurrentJsonPath();
 //............................UpDating and displaying Results....................................................................
 
 bool
-appendingDelimiterNeededBeforeAppendingStreamTokenInResult(const string &jsonPath, const StreamToken &streamToken) {
+delimiterNeededBeforeAppendingStreamTokenInResult(const string &jsonPath, const StreamToken &streamToken) {
     StreamToken lastAddedStreamTokenInThisJsonPath = lastAddedTokenInResultMap[jsonPath];
     if (lastAddedStreamTokenInThisJsonPath.isCreatedByMe) return false;
     if (streamToken.tokenType == LIST_ENDED_TOKEN || streamToken.tokenType == OBJECT_ENDED_TOKEN) return false;
@@ -32,7 +32,7 @@ appendingDelimiterNeededBeforeAppendingStreamTokenInResult(const string &jsonPat
 void addStreamTokenInJsonPathQueryResult(const string &jsonPath, const StreamToken &streamToken) {
     string jsonPathQueryResultInThisJsonPath = jsonPathQueryResultsMap[jsonPath];
     jsonPathQueryResultInThisJsonPath.append(
-            appendingDelimiterNeededBeforeAppendingStreamTokenInResult(jsonPath, streamToken) ? "," : "");
+            delimiterNeededBeforeAppendingStreamTokenInResult(jsonPath, streamToken) ? "," : "");
     lastAddedTokenInResultMap[jsonPath] = streamToken;
     JsonTokenType jsonTokenType = streamToken.tokenType;
     if (jsonTokenType == JsonTokenType::KEY_TOKEN) {
