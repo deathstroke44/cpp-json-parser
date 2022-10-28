@@ -142,7 +142,7 @@ tests = [
     }
 ]
 os.system('clear')
-os.system('g++ jsonPathQuery.cpp')
+os.system('g++ jsonPathQueryNew.cpp')
 for test in tests:
     sys_call= './a.out '+ test['fileName']+' '+ test['query']
     os.system(sys_call)

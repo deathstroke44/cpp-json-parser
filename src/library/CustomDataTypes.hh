@@ -75,6 +75,9 @@ public:
     int index;
     string key;
 
+    set<int> automationStates;
+    bool reachAcceptStates = false;
+
     Node() = default;
     
     Node(string value, bool isKeyNode) {
@@ -97,6 +100,11 @@ public:
     bool nodeMatched(Node node) {
         return (node.isKeyNode && (wildcard || recursiveDescent || node.key==key)) ||
             (!node.isKeyNode && (wildcard || node.index == index));
+    }
+
+    void updateCurrentAutomationStates(int state, int acceptState, int currentProcessingIndexInJsonPathStack) {
+        if (state == acceptState) reachAcceptStates = true;
+        else automationStates.insert(state);
     }
 };
 
