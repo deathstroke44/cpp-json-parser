@@ -7,6 +7,5 @@ add_executable(json_streamer_cpp main.cpp
         src/library/JsonStreaming.hh
         src/library/Dispatcher.hh
         src/library/Event.hh
-        src/jsonPathQuery.cpp
         src/jsonPathQueryNew.cpp
-        src/library/CustomDataTypes.hh src/jsonPathQuery.cpp)
+        src/library/CustomDataTypes.hh)

@@ -53,13 +53,13 @@ enum JsonTokenType {
 class StreamToken {
 public:
     JsonTokenType tokenType;
-    bool isCreatedByMe = true;
+    bool isNotCreatedByMe = true;
     bool isStringValue = false;
     string value;
 
     StreamToken(JsonTokenType _token_type, string _value, bool _isStringValue = false) : tokenType(_token_type),
                                                                                          value(_value),
-                                                                                         isCreatedByMe(false),
+                                                                                         isNotCreatedByMe(false),
                                                                                          isStringValue(
                                                                                                  _isStringValue) {};
 
@@ -97,54 +97,18 @@ public:
         this->index = index;
     };
 
-    bool nodeMatched(Node node) {
-        return (node.isKeyNode && (wildcard || recursiveDescent || node.key==key)) ||
-            (!node.isKeyNode && (wildcard || node.index == index));
+    bool satisfyJsonPathQuery(Node node) {
+        return (node.isKeyNode == isKeyNode) && ((node.isKeyNode && (wildcard || node.key==key)) ||
+            (!node.isKeyNode && (wildcard || node.index == index)));
     }
 
     void updateCurrentAutomationStates(int state, int acceptState, int currentProcessingIndexInJsonPathStack) {
         if (state == acceptState) reachAcceptStates = true;
         else automationStates.insert(state);
     }
-};
 
-class DFAState {
-public:
-    bool isNotCreatedByMe = true;
-    string jsonPath;
-    set<int> automationCurrentStates;
-    bool canClearLengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState = false;
-    set<int> lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState;
-
-    DFAState() { init(); }
-
-    DFAState(string jsonPath) {
-        init();
-        this->jsonPath = jsonPath;
-        isNotCreatedByMe = false;
-    }
-
-    void init() {
-        jsonPath = "$";
-        automationCurrentStates.clear();
-        lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState.clear();
-    }
-
-    void clearVariablesWhichCanBeDeleted() {
-        jsonPath.clear();
-        automationCurrentStates.clear();
-        if (!canClearLengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState) {
-            lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState.clear();
-        }
-    }
-
-    void updateCurrentAutomationStates(int state, int acceptState, int currentProcessingIndexInJsonPathStack) {
-        if (state == acceptState) lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState.insert(currentProcessingIndexInJsonPathStack);
-        else automationCurrentStates.insert(state);
-    }
-
-    bool valueOfJsonPathUptoIthIndexWillBeAddedInResult(int i) {
-        return lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState.find(i) !=
-                lengthsOfCurrentJsonPathStackWhenDfaReachedAcceptState.end();
+    void clearAutomationStates() {
+        automationStates.clear();
+        reachAcceptStates = false;
     }
 };
