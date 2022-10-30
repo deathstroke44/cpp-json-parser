@@ -76,7 +76,7 @@ public:
     string key;
 
     set<int> automationStates;
-    bool reachAcceptStates = false;
+    bool reachedAcceptStates = false;
 
     Node() = default;
     
@@ -103,12 +103,12 @@ public:
     }
 
     void updateCurrentAutomationStates(int state, int acceptState, int currentProcessingIndexInJsonPathStack) {
-        if (state == acceptState) reachAcceptStates = true;
+        if (state == acceptState) reachedAcceptStates = true;
         else automationStates.insert(state);
     }
 
     void clearAutomationStates() {
         automationStates.clear();
-        reachAcceptStates = false;
+        reachedAcceptStates = false;
     }
 };

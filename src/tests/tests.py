@@ -1,4 +1,6 @@
 import os
+import time
+start_time = time.time()
 os.chdir('..')
 file = open('output.txt','w')
 # file.write("Output of Json path query script:\n\n")
@@ -154,3 +156,4 @@ os.system('g++ jsonPathQueryNew.cpp')
 for test in tests:
     sys_call= './a.out '+ test['fileName']+' '+ test['query']
     os.system(sys_call)
+print('Execution time:', time.time()-start_time);

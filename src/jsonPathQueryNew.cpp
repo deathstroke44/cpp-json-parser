@@ -47,7 +47,7 @@ void addStreamTokenInJsonPathQueryResult(const string &jsonPath, const StreamTok
     jsonPathQueryResultsMap[jsonPath] = jsonPathQueryResultInThisJsonPath;
 }
 
-void ifJsonPathQuerySatisfyUpdateResult(const StreamToken &streamToken) {
+void updateResultIfJsonPathQuerySatisfies(const StreamToken &streamToken) {
     if (countOfReachingAcceptStateInCurrentPath) {
         string jsonPath;
         int numberOfJsonPathsAddedInResult = 0;
@@ -58,7 +58,7 @@ void ifJsonPathQuerySatisfyUpdateResult(const StreamToken &streamToken) {
             } else {
                 jsonPath.append("[" + to_string(node.index) + "]");
             }
-            if (node.reachAcceptStates) {
+            if (node.reachedAcceptStates) {
                 numberOfJsonPathsAddedInResult++;
                 addStreamTokenInJsonPathQueryResult(jsonPath, streamToken);
             }
@@ -86,7 +86,7 @@ void createAutomationStatesOfChildNodeUsingParentNode(const Node &parentNode, No
     for (auto reachedState: parentNode.automationStates) {
         if (reachedState >= acceptStateOfDfa) continue;
         if (reachedState + 1 <= acceptStateOfDfa) {
-            if (jsonPathQueryProcessed[reachedState+1].recursiveDescent) {
+            if (jsonPathQueryProcessed[reachedState + 1].recursiveDescent) {
                 childNode.updateCurrentAutomationStates(reachedState, acceptStateOfDfa, currentProcessingIndex);
             }
             if (jsonPathQueryProcessed[reachedState + 1].satisfyJsonPathQuery(childNode)) {
@@ -94,7 +94,7 @@ void createAutomationStatesOfChildNodeUsingParentNode(const Node &parentNode, No
             }
         }
     }
-    if (currentJsonPathList.back().reachAcceptStates) {
+    if (currentJsonPathList.back().reachedAcceptStates) {
         countOfReachingAcceptStateInCurrentPath++;
     }
 }
@@ -108,105 +108,109 @@ bool isLastNodeOfCurrentJsonPathIsKeyNode() {
 bool isLastNodeOfCurrentJsonPathIsIndexNode() {
     return !currentJsonPathList.empty() && !getLastNodeOfCurrentJsonPath().isKeyNode;
 }
-
 void popNodeFromCurrentJsonPath() {
     if (!currentJsonPathList.empty()) {
-        Node &lastNode = currentJsonPathList.back();
-        if (lastNode.reachAcceptStates) {
+        Node &lastNodeOfCurrentJsonPath = currentJsonPathList.back();
+        if (lastNodeOfCurrentJsonPath.reachedAcceptStates) {
             countOfReachingAcceptStateInCurrentPath--;
         }
-        lastNode.clearAutomationStates();
+        lastNodeOfCurrentJsonPath.clearAutomationStates();
         currentJsonPathList.pop_back();
     }
 }
 
+void removeLastNodeFromCurrentJsonPathIfItIsKeyNode() {
+    if (!isLastNodeOfCurrentJsonPathIsKeyNode()) return;
+    popNodeFromCurrentJsonPath();
+}
+
 void pushKeyNodeInCurrentJsonPath(const string &key) {
     currentJsonPathList.emplace_back(key, true);
-    Node &lastNode = currentJsonPathList.back();
-    createAutomationStatesOfChildNodeUsingParentNode(currentJsonPathList[currentJsonPathList.size() - 2], lastNode);
+    createAutomationStatesOfChildNodeUsingParentNode(currentJsonPathList[currentJsonPathList.size() - 2], currentJsonPathList.back());
 }
 
 void pushIndexNodeInCurrentJsonPath(int index) {
     currentJsonPathList.emplace_back(index);
 }
 
-void incrementIndexOfLastNodeOfCurrentJsonPath() {
-    Node &lastNode = currentJsonPathList.back();
-    if (lastNode.reachAcceptStates) {
+void incrementIndexLastNodeOfCurrentJsonPathIfItIsIndexNode() {
+    if (!isLastNodeOfCurrentJsonPathIsIndexNode()) return;
+    Node &lastNodeOfCurrentJsonPath = currentJsonPathList.back();
+    if (lastNodeOfCurrentJsonPath.reachedAcceptStates) {
         countOfReachingAcceptStateInCurrentPath--;
     }
-    lastNode.clearAutomationStates();
-    lastNode.index++;
-    createAutomationStatesOfChildNodeUsingParentNode(currentJsonPathList[currentJsonPathList.size() - 2], lastNode);
-    if (getLastNodeOfCurrentJsonPath().reachAcceptStates) {
+    lastNodeOfCurrentJsonPath.clearAutomationStates();
+    lastNodeOfCurrentJsonPath.index++;
+    createAutomationStatesOfChildNodeUsingParentNode(currentJsonPathList[currentJsonPathList.size() - 2], lastNodeOfCurrentJsonPath);
+    if (getLastNodeOfCurrentJsonPath().reachedAcceptStates) {
         countOfReachingAcceptStateInCurrentPath++;
     }
 }
 
-//...........................Event handler and processing...............................................................
-
 void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent) {
     StreamToken streamToken = jsonStreamEvent.getStreamToken();
-    JsonTokenType jsonTokenType = streamToken.tokenType;
-    if (jsonTokenType == KEY_TOKEN) {
-        ifJsonPathQuerySatisfyUpdateResult(streamToken);
+    JsonTokenType streamTokenType = streamToken.tokenType;
+    if (streamTokenType == KEY_TOKEN) {
+        updateResultIfJsonPathQuerySatisfies(streamToken);
         pushKeyNodeInCurrentJsonPath(streamToken.value);
-    } else if (jsonTokenType == VALUE_TOKEN) {
-        if (isLastNodeOfCurrentJsonPathIsIndexNode()) incrementIndexOfLastNodeOfCurrentJsonPath();
-        ifJsonPathQuerySatisfyUpdateResult(streamToken);
-        if (isLastNodeOfCurrentJsonPathIsKeyNode()) popNodeFromCurrentJsonPath();
-    } else if (jsonTokenType == OBJECT_STARTED_TOKEN) {
-        if (isLastNodeOfCurrentJsonPathIsIndexNode()) incrementIndexOfLastNodeOfCurrentJsonPath();
-        ifJsonPathQuerySatisfyUpdateResult(streamToken);
-    } else if (jsonTokenType == LIST_STARTED_TOKEN) {
-        if (isLastNodeOfCurrentJsonPathIsIndexNode()) incrementIndexOfLastNodeOfCurrentJsonPath();
-        ifJsonPathQuerySatisfyUpdateResult(streamToken);
+    } else if (streamTokenType == VALUE_TOKEN) {
+        incrementIndexLastNodeOfCurrentJsonPathIfItIsIndexNode();
+        updateResultIfJsonPathQuerySatisfies(streamToken);
+        removeLastNodeFromCurrentJsonPathIfItIsKeyNode();
+    } else if (streamTokenType == OBJECT_STARTED_TOKEN) {
+        incrementIndexLastNodeOfCurrentJsonPathIfItIsIndexNode();
+        updateResultIfJsonPathQuerySatisfies(streamToken);
+    } else if (streamTokenType == LIST_STARTED_TOKEN) {
+        incrementIndexLastNodeOfCurrentJsonPathIfItIsIndexNode();
+        updateResultIfJsonPathQuerySatisfies(streamToken);
         pushIndexNodeInCurrentJsonPath(-1);
-    } else if (jsonTokenType == LIST_ENDED_TOKEN) {
+    } else if (streamTokenType == LIST_ENDED_TOKEN) {
         popNodeFromCurrentJsonPath();
-        ifJsonPathQuerySatisfyUpdateResult(streamToken);
-        if (isLastNodeOfCurrentJsonPathIsKeyNode()) popNodeFromCurrentJsonPath();
-    } else if (jsonTokenType == OBJECT_ENDED_TOKEN) {
-        ifJsonPathQuerySatisfyUpdateResult(streamToken);
-        if (isLastNodeOfCurrentJsonPathIsKeyNode()) popNodeFromCurrentJsonPath();
-    } else if (jsonTokenType == DOCUMENT_END_TOKEN) printJsonPathQueryResult();
+        updateResultIfJsonPathQuerySatisfies(streamToken);
+        removeLastNodeFromCurrentJsonPathIfItIsKeyNode();
+    } else if (streamTokenType == OBJECT_ENDED_TOKEN) {
+        updateResultIfJsonPathQuerySatisfies(streamToken);
+        removeLastNodeFromCurrentJsonPathIfItIsKeyNode();
+    } else if (streamTokenType == DOCUMENT_END_TOKEN) printJsonPathQueryResult();
 }
 
 void processJsonPathQuery(const string &jsonPathQuery) {
     vector<Node> jsonPathQueryTokenized;
-    size_t indexOfDot = jsonPathQuery.find('.'), indexOfLeftSquareBracket, indexOfRightSquareBracket;
+    size_t indexOfNextDot = jsonPathQuery.find('.');
+    size_t indexOfNextLeftSquareBracket;
+    size_t indexOfNextRightSquareBracket;
     vector<int> occurrenceIndexesOfDotInQuery;
     jsonPathQueryTokenized.emplace_back("$", true);
-    while (indexOfDot != string::npos) {
-        occurrenceIndexesOfDotInQuery.push_back(indexOfDot);
-        indexOfDot = jsonPathQuery.find('.', indexOfDot + 1);
+    while (indexOfNextDot != string::npos) {
+        occurrenceIndexesOfDotInQuery.push_back(indexOfNextDot);
+        indexOfNextDot = jsonPathQuery.find('.', indexOfNextDot + 1);
     }
     for (int i = 0; i < occurrenceIndexesOfDotInQuery.size(); i++) {
-        int startIndex = occurrenceIndexesOfDotInQuery[i] + 1;
-        int endIndex = jsonPathQuery.size() - 1;
+        int ithOccurrenceOfDot = occurrenceIndexesOfDotInQuery[i] + 1;
+        int iPlusOneOccurrenceOfDot = jsonPathQuery.size() - 1;
         if (i + 1 <= occurrenceIndexesOfDotInQuery.size() - 1) {
-            endIndex = occurrenceIndexesOfDotInQuery[i + 1] - 1;
+            iPlusOneOccurrenceOfDot = occurrenceIndexesOfDotInQuery[i + 1] - 1;
         }
         string str1;
-        if (startIndex <= endIndex) {
-            str1 = jsonPathQuery.substr(startIndex, endIndex - startIndex + 1);
+        if (ithOccurrenceOfDot <= iPlusOneOccurrenceOfDot) {
+            str1 = jsonPathQuery.substr(ithOccurrenceOfDot, iPlusOneOccurrenceOfDot - ithOccurrenceOfDot + 1);
         }
-        indexOfLeftSquareBracket = str1.find('[');
-        int keyEndIndex = -1;
-        while (indexOfLeftSquareBracket != string::npos) {
-            indexOfRightSquareBracket = str1.find(']', indexOfLeftSquareBracket + 1);
-            if (indexOfRightSquareBracket != string::npos) {
-                if (keyEndIndex == -1) {
-                    keyEndIndex = indexOfLeftSquareBracket;
-                    jsonPathQueryTokenized.emplace_back(str1.substr(0, indexOfLeftSquareBracket), true);
+        indexOfNextLeftSquareBracket = str1.find('[');
+        int indexOfStartOfFirstIndexNode = -1;
+        while (indexOfNextLeftSquareBracket != string::npos) {
+            indexOfNextRightSquareBracket = str1.find(']', indexOfNextLeftSquareBracket + 1);
+            if (indexOfNextRightSquareBracket != string::npos) {
+                if (indexOfStartOfFirstIndexNode == -1) {
+                    indexOfStartOfFirstIndexNode = indexOfNextLeftSquareBracket;
+                    jsonPathQueryTokenized.emplace_back(str1.substr(0, indexOfNextLeftSquareBracket), true);
                 }
-                jsonPathQueryTokenized.emplace_back(str1.substr(indexOfLeftSquareBracket + 1,
-                                                                (indexOfRightSquareBracket - 1) -
-                                                                (indexOfLeftSquareBracket + 1) + 1), false);
-                indexOfLeftSquareBracket = str1.find('[', indexOfRightSquareBracket + 1);
+                jsonPathQueryTokenized.emplace_back(str1.substr(indexOfNextLeftSquareBracket + 1,
+                                                                (indexOfNextRightSquareBracket - 1) -
+                                                                (indexOfNextLeftSquareBracket + 1) + 1), false);
+                indexOfNextLeftSquareBracket = str1.find('[', indexOfNextRightSquareBracket + 1);
             } else break;
         }
-        if (keyEndIndex == -1) {
+        if (indexOfStartOfFirstIndexNode == -1) {
             jsonPathQueryTokenized.emplace_back(str1, true);
         }
     }
@@ -214,10 +218,10 @@ void processJsonPathQuery(const string &jsonPathQuery) {
         multipleResultExistForThisQuery = multipleResultExistForThisQuery || (token.recursiveDescent || token.wildcard);
     }
 
-    for (int i=0;i<jsonPathQueryTokenized.size();i++) {
+    for (int i = 0; i < jsonPathQueryTokenized.size(); i++) {
         Node &jsonQueryNode = jsonPathQueryTokenized.at(i);
         if (jsonPathQueryTokenized.at(i).recursiveDescent) {
-            jsonPathQueryTokenized[i+1].recursiveDescent = true;    
+            jsonPathQueryTokenized[i + 1].recursiveDescent = true;
             i++;
         }
         jsonPathQueryProcessed.push_back(jsonPathQueryTokenized.at(i));
@@ -227,15 +231,13 @@ void processJsonPathQuery(const string &jsonPathQuery) {
 void initJsonPathQueryStates(string &jsonPathQuery) {
     Node node("$", true);
     if (jsonPathQuery == "$") {
-        node.reachAcceptStates = true;
+        node.reachedAcceptStates = true;
     } else {
         node.automationStates.insert(0);
     }
     currentJsonPathList.push_back(node);
     processJsonPathQuery(jsonPathQuery);
 }
-
-//................................................................................................................................ 
 
 void executeJsonPathQuery(string fileName, string jsonPathQuery) {
     cout << "JSON path query:" << jsonPathQuery << " -filename: " << fileName << endl;
