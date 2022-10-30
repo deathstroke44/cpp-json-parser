@@ -31,13 +31,7 @@ enum StateEnum {
 };
 
 enum TokenType {
-    OPERATOR_TOKEN,
-    STRING_TOKEN,
-    EXP_TOKEN,
-    FLOAT_TOKEN,
-    INTEGER_TOKEN,
-    BOOLEAN_TOKEN,
-    NULL_TOKEN
+    OPERATOR_TOKEN, STRING_TOKEN, EXP_TOKEN, FLOAT_TOKEN, INTEGER_TOKEN, BOOLEAN_TOKEN, NULL_TOKEN
 };
 
 enum JsonTokenType {
@@ -74,21 +68,19 @@ public:
     bool recursiveDescent = false;
     int index;
     string key;
-
-    set<int> automationStates;
-    bool reachedAcceptStates = false;
+    set<int> outputOfExtendedTransitionFunction;
+    bool reachedAcceptedState = false;
 
     Node() = default;
-    
+
     Node(string value, bool isKeyNode) {
         this->isKeyNode = isKeyNode;
         if (isKeyNode) {
             this->key = value;
             wildcard = (key == "*");
             recursiveDescent = (key.length() == 0);
-        }
-        else {
-            if (value=="*") wildcard = true;
+        } else {
+            if (value == "*") wildcard = true;
             else this->index = stoi(value);
         }
     }
@@ -98,17 +90,12 @@ public:
     };
 
     bool satisfyJsonPathQuery(Node node) {
-        return (node.isKeyNode == isKeyNode) && ((node.isKeyNode && (wildcard || node.key==key)) ||
-            (!node.isKeyNode && (wildcard || node.index == index)));
-    }
-
-    void updateCurrentAutomationStates(int state, int acceptState, int currentProcessingIndexInJsonPathStack) {
-        if (state == acceptState) reachedAcceptStates = true;
-        else automationStates.insert(state);
+        return (node.isKeyNode == isKeyNode) && ((node.isKeyNode && (wildcard || node.key == key)) ||
+                                                 (!node.isKeyNode && (wildcard || node.index == index)));
     }
 
     void clearAutomationStates() {
-        automationStates.clear();
-        reachedAcceptStates = false;
+        outputOfExtendedTransitionFunction.clear();
+        reachedAcceptedState = false;
     }
 };
