@@ -3,6 +3,25 @@
 using namespace std;
 
 vector<Node> currentJsonPathList;
+
+/**
+ * {
+ * 	"user": {
+ * 		"name": {
+ * 			"name": {
+ * 				"firstName": "Samin",
+ * 				"LastName": "Yeaser"
+ * 			}
+ * 		}
+ * 	}
+ * }
+ * Query: $.user..name for that path Output of result will be [value($.user.name),value($.user.name.name)]
+   = [{"name": {"firstName": "Samin", "LastName": "Yeaser"}}, {"firstName": "Samin", "LastName": "Yeaser"}]
+ * So I need to store result for both these json path
+ * So final result will be [jsonPathQueryResultsMap['$.user.name'],jsonPathQueryResultsMap['$.user.name.name']]
+ * lastAddedTokenInResultMap['$.user.name'] will store last token added in jsonPathQueryResultsMap['$.user.name']
+ * similarly lastAddedTokenInResultMap['$.user.name.name'] will store last token added in jsonPathQueryResultsMap['$.user.name.name']
+ */
 map<string, string> jsonPathQueryResultsMap;
 map<string, StreamToken> lastAddedTokenInResultMap;
 
@@ -12,9 +31,26 @@ map<string, StreamToken> lastAddedTokenInResultMap;
 vector<Node> jsonPathQueryProcessed;
 bool multipleResultExistForThisQuery = false;
 
+/**
+ * {
+ * 	"user": {
+ * 		"name": {
+ * 			"name" : "omi".
+ * 			"surName": "smn"
+ * 		}
+ * 	}
+ * 	query = $.user..name
+ * 	after processing the more nested name node currentJsonPathList = ["$","user","name","name"]
+ * 	Among them outputOfETFHasAcceptState = true in 3nd and 4th node in path
+ * 	So in that case numberOfNodeInCurrentPathContainingAcceptStateInOutputOfETF = 2
+ * 	if numberOfNodeInCurrentPathContainingAcceptStateInOutputOfETF > 0 means json path query satisfies
+ * }
+ */
 int numberOfNodeInCurrentPathContainingAcceptStateInOutputOfETF = 0;
+/**
+ * acceptStateOfNfa = jsonPathQueryProcessed.size()-1
+ */
 int acceptStateOfNfa;
-
 
 /**
  *
@@ -37,7 +73,8 @@ bool needToAppendDelimiterInResultBeforeAppendingThisToken(const string &jsonPat
 	StreamToken lastAddedStreamTokenInThisJsonPath = lastAddedTokenInResultMap[jsonPath];
 	if (lastAddedStreamTokenInThisJsonPath.isNotCreatedByMe) return false;
 	JsonTokenType tokenTypeOfCurrentlyProcessingToken = streamToken.tokenType;
-	if (tokenTypeOfCurrentlyProcessingToken == LIST_ENDED_TOKEN || tokenTypeOfCurrentlyProcessingToken == OBJECT_ENDED_TOKEN) {
+	if (tokenTypeOfCurrentlyProcessingToken == LIST_ENDED_TOKEN
+		|| tokenTypeOfCurrentlyProcessingToken == OBJECT_ENDED_TOKEN) {
 		return false;
 	}
 	if (tokenTypeOfCurrentlyProcessingToken == VALUE_TOKEN || tokenTypeOfCurrentlyProcessingToken == LIST_STARTED_TOKEN
@@ -48,10 +85,26 @@ bool needToAppendDelimiterInResultBeforeAppendingThisToken(const string &jsonPat
 	}
 	if (tokenTypeOfCurrentlyProcessingToken == KEY_TOKEN) {
 		return lastAddedStreamTokenInThisJsonPath.tokenType != OBJECT_STARTED_TOKEN;
-	}	
+	}
 	return false;
 }
 
+/**
+ * {
+ * 	"user": {
+ * 		"name": {
+ * 			"name": {
+ * 				"firstName": "Samin",
+ * 				"LastName": "Yeaser"
+ * 			}
+ * 		}
+ * 	}
+ * }
+ * Query: $.user..name for that path Output of result will be [value($.user.name),value($.user.name.name)]
+   = [{"name": {"firstName": "Samin", "LastName": "Yeaser"}}, {"firstName": "Samin", "LastName": "Yeaser"}]
+ * @param jsonPath : for this query and json value of that field can be $.user.details.name.name or $.user.details.name
+ * @param streamToken "omi" or "name" or "{" or "}"
+ */
 void addStreamTokenInJsonPathQueryResult(const string &jsonPath, const StreamToken &streamToken) {
 	string jsonPathQueryResultInThisJsonPath = jsonPathQueryResultsMap[jsonPath];
 	if (needToAppendDelimiterInResultBeforeAppendingThisToken(jsonPath, streamToken)) {
@@ -80,7 +133,10 @@ void addStreamTokenInJsonPathQueryResult(const string &jsonPath, const StreamTok
 bool isJsonPathQuerySatisfy() {
 	return numberOfNodeInCurrentPathContainingAcceptStateInOutputOfETF > 0;
 }
-
+/**
+ * Update result with currently processing streamToken
+ * @param streamToken
+ */
 void updateResult(const StreamToken &streamToken) {
 	string jsonPath;
 	int numberOfJsonPathsAddedInResult = 0;
@@ -126,18 +182,39 @@ vector<int> transitionFunction(int state, Node &node) {
 	return result;
 }
 
-void extendedTransitionFunction(const set<int> &states, Node &node) {
-	node.clearAutomationStates();
-	for (auto state : states) {
-		for (auto transitionedState : transitionFunction(state, node)) {
+/**
+ * {
+ * 	"user": {
+ * 		-"name"-: {
+ * 			"name": {
+ * 				"firstName": "Samin",
+ * 				"LastName": "Yeaser"
+ * 			}
+ * 		}
+ * 	}
+ * }
+ * Query: $.user..name
+ * @param statesInETFOutputOfParentNodeExceptAcceptState: ETF output after processing parentNode of "name"(marked)= {1}
+ * parentNode.outputOfETFExceptAcceptState = {1}, parentNode.outputOfETFHasAcceptState = false
+ * @param childNode: childNode {"isKeyNode":true,"keyValue":"name"}
+ * childNode.outputOfETFExceptAcceptState
+ * ETF({1},"name")={1,2}
+ * states of ETF(sates,childNode) - {ACCEPT-STATE} will be stored in childNode.outputOfETFExceptAcceptState = {1,2} - {2} = {1}
+ * childNode.outputOfETFHasAcceptState will be true if ETF(sates,childNode) have ACCEPT-STATE.
+ * In this case = ETF(sates,childNode)({1,2}) has accept state 2. childNode.outputOfETFHasAcceptState = true
+ */
+void extendedTransitionFunction(const set<int> &statesInETFOutputOfParentNodeExceptAcceptState, Node &childNode) {
+	childNode.clearAutomationStates();
+	for (auto state : statesInETFOutputOfParentNodeExceptAcceptState) {
+		for (auto transitionedState : transitionFunction(state, childNode)) {
 			if (transitionedState == acceptStateOfNfa) {
-				node.outputOfETFHasAcceptState = true;
+				childNode.outputOfETFHasAcceptState = true;
 			} else {
-				node.outputOfETFExceptAcceptState.insert(transitionedState);
+				childNode.outputOfETFExceptAcceptState.insert(transitionedState);
 			}
 		}
 	}
-	if (node.outputOfETFHasAcceptState) {
+	if (childNode.outputOfETFHasAcceptState) {
 		numberOfNodeInCurrentPathContainingAcceptStateInOutputOfETF++;
 	}
 }
@@ -158,6 +235,11 @@ bool isLastNodeOfCurrentJsonPathIsIndexNode() {
 	return !currentJsonPathList.empty() && !getLastNodeOfCurrentJsonPath().isKeyNode;
 }
 
+/**
+ * if parentNode of NewNode's outputOfETFExceptAcceptState then ETF(parentNode.outputOfETFExceptAcceptState, newNode) will be empty
+  then incrementing the index of last node is completely unnecessary
+ * @return
+ */
 bool isIncrementIndexOfLastNodeIsNecessaryNowConsideringETFState() {
 	return currentJsonPathList.size() - 2 >= 0
 		&& !getSecondLastNodeOfCurrentJsonPath().outputOfETFExceptAcceptState.empty();
@@ -247,6 +329,9 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
 	}
 }
 
+/*
+ * This function will tokenize and process the json path query for implementation purpose
+ */
 void processJsonPathQuery(const string &jsonPathQuery) {
 	vector<Node> jsonPathQueryTokenized;
 	size_t indexOfNextDot = jsonPathQuery.find('.');
@@ -266,7 +351,8 @@ void processJsonPathQuery(const string &jsonPathQuery) {
 		}
 		string stringBetweenTwoConsecutiveDot;
 		if (ithOccurrenceOfDot <= iPlusOneOccurrenceOfDot) {
-			stringBetweenTwoConsecutiveDot = jsonPathQuery.substr(ithOccurrenceOfDot, iPlusOneOccurrenceOfDot - ithOccurrenceOfDot + 1);
+			stringBetweenTwoConsecutiveDot =
+				jsonPathQuery.substr(ithOccurrenceOfDot, iPlusOneOccurrenceOfDot - ithOccurrenceOfDot + 1);
 		}
 		indexOfNextLeftSquareBracket = stringBetweenTwoConsecutiveDot.find('[');
 		int indexOfStartOfFirstIndexNode = -1;
@@ -275,12 +361,16 @@ void processJsonPathQuery(const string &jsonPathQuery) {
 			if (indexOfNextRightSquareBracket != string::npos) {
 				if (indexOfStartOfFirstIndexNode == -1) {
 					indexOfStartOfFirstIndexNode = indexOfNextLeftSquareBracket;
-					jsonPathQueryTokenized.emplace_back(stringBetweenTwoConsecutiveDot.substr(0, indexOfNextLeftSquareBracket), true);
+					jsonPathQueryTokenized.emplace_back(stringBetweenTwoConsecutiveDot.substr(0,
+																							  indexOfNextLeftSquareBracket),
+														true);
 				}
-				jsonPathQueryTokenized.emplace_back(stringBetweenTwoConsecutiveDot.substr(indexOfNextLeftSquareBracket + 1,
-																(indexOfNextRightSquareBracket - 1)
-																	- (indexOfNextLeftSquareBracket + 1) + 1), false);
-				indexOfNextLeftSquareBracket = stringBetweenTwoConsecutiveDot.find('[', indexOfNextRightSquareBracket + 1);
+				jsonPathQueryTokenized.emplace_back(stringBetweenTwoConsecutiveDot.substr(
+					indexOfNextLeftSquareBracket + 1,
+					(indexOfNextRightSquareBracket - 1)
+						- (indexOfNextLeftSquareBracket + 1) + 1), false);
+				indexOfNextLeftSquareBracket =
+					stringBetweenTwoConsecutiveDot.find('[', indexOfNextRightSquareBracket + 1);
 			} else break;
 		}
 		if (indexOfStartOfFirstIndexNode == -1) {
@@ -299,7 +389,10 @@ void processJsonPathQuery(const string &jsonPathQuery) {
 		jsonPathQueryProcessed.emplace_back(jsonPathQueryTokenized.at(i));
 	}
 }
-
+/**
+ * Initializing node for $ and processing the JsonPathQuery
+ * @param jsonPathQuery
+ */
 void initJsonPathQueryStates(string &jsonPathQuery) {
 	Node node("$", true);
 	if (jsonPathQuery == "$") {
