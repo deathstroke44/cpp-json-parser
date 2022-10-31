@@ -174,56 +174,6 @@ void printJsonPathQueryResult() {
 	}
 }
 
-vector<int> transitionFunction(int state, Node &node) {
-	vector<int> result;
-	if (state + 1 <= acceptStateOfNfa) {
-		if (jsonPathQueryProcessed[state + 1].recursiveDescent) {
-			result.emplace_back(state);
-		}
-		if (jsonPathQueryProcessed[state + 1].satisfyJsonPathQuery(node)) {
-			result.emplace_back(state + 1);
-		}
-	}
-	return result;
-}
-
-/**
- * {
- * 	"user": {
- * 		-"name"-: {
- * 			"name": {
- * 				"firstName": "Samin",
- * 				"LastName": "Yeaser"
- * 			}
- * 		}
- * 	}
- * }
- * Query: $.user..name
- * @param statesInETFOutputOfParentNodeExceptAcceptState: ETF output except accept state after processing parentNode of "name"(marked)= {1}
- * parentNode.outputOfETFExceptAcceptState = {1}, parentNode.outputOfETFHasAcceptState = false
- * @param childNode: childNode {"isKeyNode":true,"keyValue":"name"}
- * childNode.outputOfETFExceptAcceptState
- * ETF({1},"name")={1,2}
- * states of ETF(sates,childNode) - {ACCEPT-STATE} will be stored in childNode.outputOfETFExceptAcceptState = {1,2} - {2} = {1}
- * childNode.outputOfETFHasAcceptState will be true if ETF(sates,childNode) have ACCEPT-STATE.
- * In this case = ETF(sates,childNode)({1,2}) has accept state 2. childNode.outputOfETFHasAcceptState = true
- */
-void extendedTransitionFunction(const set<int> &statesInETFOutputOfParentNodeExceptAcceptState, Node &childNode) {
-	childNode.clearAutomationStates();
-	for (auto state : statesInETFOutputOfParentNodeExceptAcceptState) {
-		for (auto transitionedState : transitionFunction(state, childNode)) {
-			if (transitionedState == acceptStateOfNfa) {
-				childNode.outputOfETFHasAcceptState = true;
-			} else {
-				childNode.outputOfETFExceptAcceptState.insert(transitionedState);
-			}
-		}
-	}
-	if (childNode.outputOfETFHasAcceptState) {
-		numberOfNodeInCurrentPathContainingAcceptStateInOutputOfETF++;
-	}
-}
-
 Node getLastNodeOfCurrentJsonPath() {
 	return currentJsonPathList.back();
 }
@@ -231,6 +181,46 @@ Node getLastNodeOfCurrentJsonPath() {
 Node getSecondLastNodeOfCurrentJsonPath() {
 	return currentJsonPathList.at(currentJsonPathList.size() - 2);
 }
+
+
+/**
+ * @brief 
+ * ETF - Extended Transition Function
+ * currentJsonPathList = ["$","general","user","name"]
+ * query: $..user.name
+ * ETF(q0,{"$"}) = {0}
+ * ETF(q0,{"$","general"}) = TF(0,"general") = {0}
+ * ETF(q0,{"$","general","user"}) = TF(0,"..user") = {0,1}
+ * ETF(q0,{"$","general","user","name"}) = TF(0,"name") U TF(1,"name") = {0} U {2} = {0,2}
+ * We can see that ETF(q0,{"$","general","user","name"}) is using the output of ETF(q0,{"$","general","user"})
+ * So we are storing output of ETF of a path ($.general.user) into the last node ("user" node) of the path.
+ * So we can compute the ETF of currentJson path by using the ETF states of second last node in current json path
+ * For example to compute ETF of $.general.user.name we ule use ETF of $.general.user which is stored in "user" node
+ */
+void computeExtendedTransitionFunctionForCurrentJsonPath() {
+	Node &lastNodeOfCurrentJsonPath = currentJsonPathList.back();
+	lastNodeOfCurrentJsonPath.clearAutomationStates();
+	for (auto state : getSecondLastNodeOfCurrentJsonPath().outputOfETFExceptAcceptState) {
+		if (state + 1 <= acceptStateOfNfa) {
+		if (jsonPathQueryProcessed[state + 1].recursiveDescent) {
+			lastNodeOfCurrentJsonPath.outputOfETFExceptAcceptState.insert(state);
+		}
+		if (jsonPathQueryProcessed[state + 1].satisfyJsonPathQuery(lastNodeOfCurrentJsonPath)) {
+			if (state + 1 == acceptStateOfNfa) {
+				lastNodeOfCurrentJsonPath.outputOfETFHasAcceptState = true;
+			} else {
+				lastNodeOfCurrentJsonPath.outputOfETFExceptAcceptState.insert(state + 1);
+			}
+		}
+	}
+	}
+	if (lastNodeOfCurrentJsonPath.outputOfETFHasAcceptState) {
+		numberOfNodeInCurrentPathContainingAcceptStateInOutputOfETF++;
+	}
+	
+}
+
+
 
 bool isLastNodeOfCurrentJsonPathIsKeyNode() {
 	return !currentJsonPathList.empty() && getLastNodeOfCurrentJsonPath().isKeyNode;
@@ -263,8 +253,7 @@ void popNodeFromCurrentJsonPath() {
 
 void pushKeyNodeInCurrentJsonPathList(const string &key) {
 	currentJsonPathList.emplace_back(key, true);
-	extendedTransitionFunction(getSecondLastNodeOfCurrentJsonPath().outputOfETFExceptAcceptState,
-							   currentJsonPathList.back());
+	computeExtendedTransitionFunctionForCurrentJsonPath();
 }
 
 void pushIndexNodeInCurrentJsonPath(int index) {
@@ -277,8 +266,7 @@ void incrementIndexOfLastNodeInCurrentJsonPath() {
 		numberOfNodeInCurrentPathContainingAcceptStateInOutputOfETF--;
 	}
 	lastNodeOfCurrentJsonPath.indexValue++;
-	extendedTransitionFunction(getSecondLastNodeOfCurrentJsonPath().outputOfETFExceptAcceptState,
-							   lastNodeOfCurrentJsonPath);
+	computeExtendedTransitionFunctionForCurrentJsonPath();
 }
 
 void jsonStreamingEventHandlerForJsonPathQuery(const JsonStreamEvent<string> &jsonStreamEvent) {
