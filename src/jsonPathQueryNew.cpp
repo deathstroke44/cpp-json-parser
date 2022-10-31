@@ -7,21 +7,24 @@ map<string, string> jsonPathQueryResultsMap;
 map<string, StreamToken> lastAddedTokenInResultMap;
 vector<Node> jsonPathQueryProcessed;
 bool multipleResultExistForThisQuery = false;
-int countOfReachingAcceptStateInCurrentPath = 0;
+int numberOfNodeInCurrentPathContainingAcceptStateInTheirETF = 0;
 int acceptStateOfNfa;
 
 bool delimiterNeededBeforeAppendingStreamTokenInResult(const string &jsonPath, const StreamToken &streamToken) {
 	StreamToken lastAddedStreamTokenInThisJsonPath = lastAddedTokenInResultMap[jsonPath];
 	if (lastAddedStreamTokenInThisJsonPath.isNotCreatedByMe) return false;
-	JsonTokenType currentlyProcessingToken = streamToken.tokenType;
-	JsonTokenType lastAddedTokenInResult = lastAddedStreamTokenInThisJsonPath.tokenType;
-	if (currentlyProcessingToken == LIST_ENDED_TOKEN || currentlyProcessingToken == OBJECT_ENDED_TOKEN) return false;
-	if (currentlyProcessingToken == VALUE_TOKEN || currentlyProcessingToken == LIST_STARTED_TOKEN
-		|| currentlyProcessingToken == OBJECT_STARTED_TOKEN) {
-		return lastAddedTokenInResult == VALUE_TOKEN || lastAddedTokenInResult == OBJECT_ENDED_TOKEN
-			|| lastAddedTokenInResult == LIST_ENDED_TOKEN;
+	JsonTokenType tokenTypeOfCurrentlyProcessingToken = streamToken.tokenType;
+	if (tokenTypeOfCurrentlyProcessingToken == LIST_ENDED_TOKEN
+		|| tokenTypeOfCurrentlyProcessingToken == OBJECT_ENDED_TOKEN)
+		return false;
+	if (tokenTypeOfCurrentlyProcessingToken == VALUE_TOKEN || tokenTypeOfCurrentlyProcessingToken == LIST_STARTED_TOKEN
+		|| tokenTypeOfCurrentlyProcessingToken == OBJECT_STARTED_TOKEN) {
+		return lastAddedStreamTokenInThisJsonPath.tokenType == VALUE_TOKEN
+			|| lastAddedStreamTokenInThisJsonPath.tokenType == OBJECT_ENDED_TOKEN
+			|| lastAddedStreamTokenInThisJsonPath.tokenType == LIST_ENDED_TOKEN;
 	}
-	if (currentlyProcessingToken == KEY_TOKEN) return lastAddedTokenInResult != OBJECT_STARTED_TOKEN;
+	if (tokenTypeOfCurrentlyProcessingToken == KEY_TOKEN)
+		return lastAddedStreamTokenInThisJsonPath.tokenType != OBJECT_STARTED_TOKEN;
 	return false;
 }
 
@@ -49,17 +52,17 @@ void addStreamTokenInJsonPathQueryResult(const string &jsonPath, const StreamTok
 }
 
 void updateResultIfJsonPathQuerySatisfies(const StreamToken &streamToken) {
-	if (countOfReachingAcceptStateInCurrentPath) {
+	if (numberOfNodeInCurrentPathContainingAcceptStateInTheirETF) {
 		string jsonPath;
 		int numberOfJsonPathsAddedInResult = 0;
 		for (const auto &node : currentJsonPathList) {
-			if (numberOfJsonPathsAddedInResult >= countOfReachingAcceptStateInCurrentPath) return;
+			if (numberOfJsonPathsAddedInResult >= numberOfNodeInCurrentPathContainingAcceptStateInTheirETF) return;
 			if (node.isKeyNode) {
-				jsonPath.append(node.key != "$" ? "." + node.key : node.key);
+				jsonPath.append(node.keyValue != "$" ? "." + node.keyValue : node.keyValue);
 			} else {
-				jsonPath.append("[" + to_string(node.index) + "]");
+				jsonPath.append("[" + to_string(node.indexValue) + "]");
 			}
-			if (node.reachedAcceptedState) {
+			if (node.outputOfETFHasAcceptState) {
 				numberOfJsonPathsAddedInResult++;
 				addStreamTokenInJsonPathQueryResult(jsonPath, streamToken);
 			}
@@ -98,20 +101,24 @@ void extendedTransitionFunction(const set<int> &states, Node &childNode) {
 	for (auto state : states) {
 		for (auto transitionedState : transitionFunction(state, childNode)) {
 			if (transitionedState == acceptStateOfNfa) {
-				childNode.reachedAcceptedState = true;
+				childNode.outputOfETFHasAcceptState = true;
 			} else {
-				childNode.outputOfExtendedTransitionFunction.insert(transitionedState);
+				childNode.outputOfETFExceptAcceptState.insert(transitionedState);
 			}
 		}
 	}
-	if (childNode.reachedAcceptedState) {
-		countOfReachingAcceptStateInCurrentPath++;
+	if (childNode.outputOfETFHasAcceptState) {
+		numberOfNodeInCurrentPathContainingAcceptStateInTheirETF++;
 	}
 }
 
-Node getLastNodeOfCurrentJsonPath() { return currentJsonPathList.back(); }
+Node getLastNodeOfCurrentJsonPath() {
+	return currentJsonPathList.back();
+}
 
-Node getSecondLastNodeOfCurrentJsonPath() { return currentJsonPathList.at(currentJsonPathList.size() - 2); }
+Node getSecondLastNodeOfCurrentJsonPath() {
+	return currentJsonPathList.at(currentJsonPathList.size() - 2);
+}
 
 bool isLastNodeOfCurrentJsonPathIsKeyNode() {
 	return !currentJsonPathList.empty() && getLastNodeOfCurrentJsonPath().isKeyNode;
@@ -121,16 +128,16 @@ bool isLastNodeOfCurrentJsonPathIsIndexNode() {
 	return !currentJsonPathList.empty() && !getLastNodeOfCurrentJsonPath().isKeyNode;
 }
 
-bool needToIncrementIndexOfLastNode() {
+bool isIncrementIndexOfLastNodeIsNecessaryNowConsideringETFState() {
 	return currentJsonPathList.size() - 2 >= 0
-		&& !getSecondLastNodeOfCurrentJsonPath().outputOfExtendedTransitionFunction.empty();
+		&& !getSecondLastNodeOfCurrentJsonPath().outputOfETFExceptAcceptState.empty();
 }
 
 void popNodeFromCurrentJsonPath() {
 	if (!currentJsonPathList.empty()) {
 		Node &lastNodeOfCurrentJsonPath = currentJsonPathList.back();
-		if (lastNodeOfCurrentJsonPath.reachedAcceptedState) {
-			countOfReachingAcceptStateInCurrentPath--;
+		if (lastNodeOfCurrentJsonPath.outputOfETFHasAcceptState) {
+			numberOfNodeInCurrentPathContainingAcceptStateInTheirETF--;
 		}
 		lastNodeOfCurrentJsonPath.clearAutomationStates();
 		currentJsonPathList.pop_back();
@@ -145,7 +152,7 @@ void removeLastNodeFromCurrentJsonPathIfItIsKeyNode() {
 
 void pushKeyNodeInCurrentJsonPath(const string &key) {
 	currentJsonPathList.emplace_back(key, true);
-	extendedTransitionFunction(getSecondLastNodeOfCurrentJsonPath().outputOfExtendedTransitionFunction,
+	extendedTransitionFunction(getSecondLastNodeOfCurrentJsonPath().outputOfETFExceptAcceptState,
 							   currentJsonPathList.back());
 }
 
@@ -155,19 +162,19 @@ void pushIndexNodeInCurrentJsonPath(int index) {
 
 void incrementIndexLastNodeOfCurrentJsonPath() {
 	Node &lastNodeOfCurrentJsonPath = currentJsonPathList.back();
-	if (lastNodeOfCurrentJsonPath.reachedAcceptedState) {
-		countOfReachingAcceptStateInCurrentPath--;
+	if (lastNodeOfCurrentJsonPath.outputOfETFHasAcceptState) {
+		numberOfNodeInCurrentPathContainingAcceptStateInTheirETF--;
 	}
-	lastNodeOfCurrentJsonPath.index++;
-	extendedTransitionFunction(getSecondLastNodeOfCurrentJsonPath().outputOfExtendedTransitionFunction,
+	lastNodeOfCurrentJsonPath.indexValue++;
+	extendedTransitionFunction(getSecondLastNodeOfCurrentJsonPath().outputOfETFExceptAcceptState,
 							   lastNodeOfCurrentJsonPath);
-	if (getLastNodeOfCurrentJsonPath().reachedAcceptedState) {
-		countOfReachingAcceptStateInCurrentPath++;
+	if (getLastNodeOfCurrentJsonPath().outputOfETFHasAcceptState) {
+		numberOfNodeInCurrentPathContainingAcceptStateInTheirETF++;
 	}
 }
 
 void incrementIndexLastNodeOfCurrentJsonPathIfItIsIndexNode() {
-	if (isLastNodeOfCurrentJsonPathIsIndexNode() && needToIncrementIndexOfLastNode()) {
+	if (isLastNodeOfCurrentJsonPathIsIndexNode() && isIncrementIndexOfLastNodeIsNecessaryNowConsideringETFState()) {
 		incrementIndexLastNodeOfCurrentJsonPath();
 	}
 }
@@ -196,7 +203,9 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
 	} else if (streamTokenType == OBJECT_ENDED_TOKEN) {
 		updateResultIfJsonPathQuerySatisfies(streamToken);
 		removeLastNodeFromCurrentJsonPathIfItIsKeyNode();
-	} else if (streamTokenType == DOCUMENT_END_TOKEN) printJsonPathQueryResult();
+	} else if (streamTokenType == DOCUMENT_END_TOKEN) {
+		printJsonPathQueryResult();
+	}
 }
 
 void processJsonPathQuery(const string &jsonPathQuery) {
@@ -255,9 +264,9 @@ void processJsonPathQuery(const string &jsonPathQuery) {
 void initJsonPathQueryStates(string &jsonPathQuery) {
 	Node node("$", true);
 	if (jsonPathQuery == "$") {
-		node.reachedAcceptedState = true;
+		node.outputOfETFHasAcceptState = true;
 	} else {
-		node.outputOfExtendedTransitionFunction.insert(0);
+		node.outputOfETFExceptAcceptState.insert(0);
 	}
 	currentJsonPathList.emplace_back(node);
 	processJsonPathQuery(jsonPathQuery);
