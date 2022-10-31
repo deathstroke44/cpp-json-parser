@@ -182,7 +182,6 @@ Node getSecondLastNodeOfCurrentJsonPath() {
 	return currentJsonPathList.at(currentJsonPathList.size() - 2);
 }
 
-
 /**
  * @brief 
  * ETF - Extended Transition Function
@@ -202,25 +201,22 @@ void computeExtendedTransitionFunctionForCurrentJsonPath() {
 	lastNodeOfCurrentJsonPath.clearAutomationStates();
 	for (auto state : getSecondLastNodeOfCurrentJsonPath().outputOfETFExceptAcceptState) {
 		if (state + 1 <= acceptStateOfNfa) {
-		if (jsonPathQueryProcessed[state + 1].recursiveDescent) {
-			lastNodeOfCurrentJsonPath.outputOfETFExceptAcceptState.insert(state);
-		}
-		if (jsonPathQueryProcessed[state + 1].satisfyJsonPathQuery(lastNodeOfCurrentJsonPath)) {
-			if (state + 1 == acceptStateOfNfa) {
-				lastNodeOfCurrentJsonPath.outputOfETFHasAcceptState = true;
-			} else {
-				lastNodeOfCurrentJsonPath.outputOfETFExceptAcceptState.insert(state + 1);
+			if (jsonPathQueryProcessed[state + 1].recursiveDescent) {
+				lastNodeOfCurrentJsonPath.outputOfETFExceptAcceptState.insert(state);
+			}
+			if (jsonPathQueryProcessed[state + 1].satisfyJsonPathQuery(lastNodeOfCurrentJsonPath)) {
+				if (state + 1 == acceptStateOfNfa) {
+					lastNodeOfCurrentJsonPath.outputOfETFHasAcceptState = true;
+				} else {
+					lastNodeOfCurrentJsonPath.outputOfETFExceptAcceptState.insert(state + 1);
+				}
 			}
 		}
-	}
 	}
 	if (lastNodeOfCurrentJsonPath.outputOfETFHasAcceptState) {
 		numberOfNodeInCurrentPathContainingAcceptStateInOutputOfETF++;
 	}
-	
 }
-
-
 
 bool isLastNodeOfCurrentJsonPathIsKeyNode() {
 	return !currentJsonPathList.empty() && getLastNodeOfCurrentJsonPath().isKeyNode;
@@ -383,7 +379,8 @@ void processJsonPathQuery(const string &jsonPathQuery) {
 		}
 	}
 	for (auto &token : jsonPathQueryTokenized) {
-		wildCardOrRecursiveDescentContainsInQuery = wildCardOrRecursiveDescentContainsInQuery || (token.recursiveDescent || token.wildcard);
+		wildCardOrRecursiveDescentContainsInQuery =
+			wildCardOrRecursiveDescentContainsInQuery || (token.recursiveDescent || token.wildcard);
 	}
 
 	/**
