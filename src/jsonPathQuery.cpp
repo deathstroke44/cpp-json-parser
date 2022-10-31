@@ -15,7 +15,7 @@ vector<Node> currentJsonPathList;
  * 		}
  * 	}
  * }
- * Query: $.user..name for that path Output of result will be [value($.user.name),value($.user.name.name)]
+ * Query: $.user..name for that json path query result will be [value($.user.name),value($.user.name.name)]
    = [{"name": {"firstName": "Samin", "LastName": "Yeaser"}}, {"firstName": "Samin", "LastName": "Yeaser"}]
  * So I need to store result for both these json path
  * So final result will be [jsonPathQueryResultsMap['$.user.name'],jsonPathQueryResultsMap['$.user.name.name']]
@@ -29,7 +29,7 @@ map<string, StreamToken> lastAddedTokenInResultMap;
  * Processed tokenized version of json path query
  */
 vector<Node> jsonPathQueryProcessed;
-bool multipleResultExistForThisQuery = false;
+bool wildCardOrRecursiveDescentContainsInQuery = false;
 
 /**
  * {
@@ -139,6 +139,9 @@ bool isJsonPathQuerySatisfy() {
  */
 void updateResult(const StreamToken &streamToken) {
 	string jsonPath;
+	/**
+	 * This variable is added for optimization. So I won't have to iterate the whole list if not needed
+	 */
 	int numberOfJsonPathsAddedInResult = 0;
 	for (const auto &node : currentJsonPathList) {
 		if (numberOfJsonPathsAddedInResult >= numberOfNodeInCurrentPathContainingAcceptStateInOutputOfETF) {
@@ -162,7 +165,9 @@ void printJsonPathQueryResult() {
 		if (finalResult.length()) finalResult.push_back(',');
 		finalResult.append(result.second);
 	}
-	if (multipleResultExistForThisQuery) finalResult = "[" + finalResult + "]";
+	if (wildCardOrRecursiveDescentContainsInQuery) {
+		finalResult = "[" + finalResult + "]";
+	}
 	cout << "Got value of desired key final result: " << endl << finalResult << endl;
 	for (const auto &result : jsonPathQueryResultsMap) {
 		cout << "Result For this JSON path query: " << result.first << " -> " << result.second << endl;;
@@ -194,7 +199,7 @@ vector<int> transitionFunction(int state, Node &node) {
  * 	}
  * }
  * Query: $.user..name
- * @param statesInETFOutputOfParentNodeExceptAcceptState: ETF output after processing parentNode of "name"(marked)= {1}
+ * @param statesInETFOutputOfParentNodeExceptAcceptState: ETF output except accept state after processing parentNode of "name"(marked)= {1}
  * parentNode.outputOfETFExceptAcceptState = {1}, parentNode.outputOfETFHasAcceptState = false
  * @param childNode: childNode {"isKeyNode":true,"keyValue":"name"}
  * childNode.outputOfETFExceptAcceptState
@@ -256,13 +261,7 @@ void popNodeFromCurrentJsonPath() {
 	}
 }
 
-void removeLastNodeFromCurrentJsonPathIfItIsKeyNode() {
-	if (isLastNodeOfCurrentJsonPathIsKeyNode()) {
-		popNodeFromCurrentJsonPath();
-	}
-}
-
-void pushKeyNodeInCurrentJsonPath(const string &key) {
+void pushKeyNodeInCurrentJsonPathList(const string &key) {
 	currentJsonPathList.emplace_back(key, true);
 	extendedTransitionFunction(getSecondLastNodeOfCurrentJsonPath().outputOfETFExceptAcceptState,
 							   currentJsonPathList.back());
@@ -272,7 +271,7 @@ void pushIndexNodeInCurrentJsonPath(int index) {
 	currentJsonPathList.emplace_back(index);
 }
 
-void incrementIndexLastNodeOfCurrentJsonPath() {
+void incrementIndexOfLastNodeInCurrentJsonPath() {
 	Node &lastNodeOfCurrentJsonPath = currentJsonPathList.back();
 	if (lastNodeOfCurrentJsonPath.outputOfETFHasAcceptState) {
 		numberOfNodeInCurrentPathContainingAcceptStateInOutputOfETF--;
@@ -282,32 +281,34 @@ void incrementIndexLastNodeOfCurrentJsonPath() {
 							   lastNodeOfCurrentJsonPath);
 }
 
-void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent) {
+void jsonStreamingEventHandlerForJsonPathQuery(const JsonStreamEvent<string> &jsonStreamEvent) {
 	StreamToken streamToken = jsonStreamEvent.getStreamToken();
 	JsonTokenType streamTokenType = streamToken.tokenType;
 	if (streamTokenType == KEY_TOKEN) {
 		if (isJsonPathQuerySatisfy()) {
 			updateResult(streamToken);
 		}
-		pushKeyNodeInCurrentJsonPath(streamToken.value);
+		pushKeyNodeInCurrentJsonPathList(streamToken.value);
 	} else if (streamTokenType == VALUE_TOKEN) {
 		if (isLastNodeOfCurrentJsonPathIsIndexNode() && isIncrementIndexOfLastNodeIsNecessaryNowConsideringETFState()) {
-			incrementIndexLastNodeOfCurrentJsonPath();
+			incrementIndexOfLastNodeInCurrentJsonPath();
 		}
 		if (isJsonPathQuerySatisfy()) {
 			updateResult(streamToken);
 		}
-		removeLastNodeFromCurrentJsonPathIfItIsKeyNode();
+		if (isLastNodeOfCurrentJsonPathIsKeyNode()) {
+			popNodeFromCurrentJsonPath();
+		}
 	} else if (streamTokenType == OBJECT_STARTED_TOKEN) {
 		if (isLastNodeOfCurrentJsonPathIsIndexNode() && isIncrementIndexOfLastNodeIsNecessaryNowConsideringETFState()) {
-			incrementIndexLastNodeOfCurrentJsonPath();
+			incrementIndexOfLastNodeInCurrentJsonPath();
 		}
 		if (isJsonPathQuerySatisfy()) {
 			updateResult(streamToken);
 		}
 	} else if (streamTokenType == LIST_STARTED_TOKEN) {
 		if (isLastNodeOfCurrentJsonPathIsIndexNode() && isIncrementIndexOfLastNodeIsNecessaryNowConsideringETFState()) {
-			incrementIndexLastNodeOfCurrentJsonPath();
+			incrementIndexOfLastNodeInCurrentJsonPath();
 		}
 		if (isJsonPathQuerySatisfy()) {
 			updateResult(streamToken);
@@ -318,12 +319,16 @@ void handleJsonStreamParserEvent(const JsonStreamEvent<string> &jsonStreamEvent)
 		if (isJsonPathQuerySatisfy()) {
 			updateResult(streamToken);
 		}
-		removeLastNodeFromCurrentJsonPathIfItIsKeyNode();
+		if (isLastNodeOfCurrentJsonPathIsKeyNode()) {
+			popNodeFromCurrentJsonPath();
+		}
 	} else if (streamTokenType == OBJECT_ENDED_TOKEN) {
 		if (isJsonPathQuerySatisfy()) {
 			updateResult(streamToken);
 		}
-		removeLastNodeFromCurrentJsonPathIfItIsKeyNode();
+		if (isLastNodeOfCurrentJsonPathIsKeyNode()) {
+			popNodeFromCurrentJsonPath();
+		}
 	} else if (streamTokenType == DOCUMENT_END_TOKEN) {
 		printJsonPathQueryResult();
 	}
@@ -344,6 +349,13 @@ void processJsonPathQuery(const string &jsonPathQuery) {
 		indexOfNextDot = jsonPathQuery.find('.', indexOfNextDot + 1);
 	}
 	for (int i = 0; i < occurrenceIndexesOfDotInQuery.size(); i++) {
+		/**
+		 * $.user.details[0].name
+		 * in that case for each iteration stringBetweenTwoConsecutiveDot will be
+		 * user
+		 * details[0]
+		 * name
+		 */
 		int ithOccurrenceOfDot = occurrenceIndexesOfDotInQuery[i] + 1;
 		int iPlusOneOccurrenceOfDot = jsonPathQuery.size() - 1;
 		if (i + 1 <= occurrenceIndexesOfDotInQuery.size() - 1) {
@@ -356,6 +368,11 @@ void processJsonPathQuery(const string &jsonPathQuery) {
 		}
 		indexOfNextLeftSquareBracket = stringBetweenTwoConsecutiveDot.find('[');
 		int indexOfStartOfFirstIndexNode = -1;
+		/**
+		 * This step will further split value of stringBetweenTwoConsecutiveDot
+		 * details[0] will split into details(keyNode) and 0(indexNode)
+		 * user and name string wont split further
+		 */
 		while (indexOfNextLeftSquareBracket != string::npos) {
 			indexOfNextRightSquareBracket = stringBetweenTwoConsecutiveDot.find(']', indexOfNextLeftSquareBracket + 1);
 			if (indexOfNextRightSquareBracket != string::npos) {
@@ -378,8 +395,15 @@ void processJsonPathQuery(const string &jsonPathQuery) {
 		}
 	}
 	for (auto &token : jsonPathQueryTokenized) {
-		multipleResultExistForThisQuery = multipleResultExistForThisQuery || (token.recursiveDescent || token.wildcard);
+		wildCardOrRecursiveDescentContainsInQuery = wildCardOrRecursiveDescentContainsInQuery || (token.recursiveDescent || token.wildcard);
 	}
+
+	/**
+	 * after splitting $.user..name.*
+	 * jsonPathQueryTokenized = [{"keyValue": "$"},{"recursive descent": true, "keyValue":""}, {"keyValue":"user"}, {"keyValue":"name"}, {"keyValue":"wildcard"}]
+	 * This iteration will be processed this into
+	 * jsonPathQueryProcessed = [{"keyValue": "$"},{"recursive descent": true, "keyValue":"user"}, {"keyValue":"name"}, {"keyValue":"wildcard"}]
+	 */
 	for (int i = 0; i < jsonPathQueryTokenized.size(); i++) {
 		Node &jsonQueryNode = jsonPathQueryTokenized.at(i);
 		if (jsonPathQueryTokenized.at(i).recursiveDescent) {
@@ -410,7 +434,7 @@ void executeJsonPathQuery(string fileName, string jsonPathQuery) {
 	fileName = "tests/Json files/" + fileName;
 	initJsonPathQueryStates(jsonPathQuery);
 	JsonStreamParser jsonStreamParser = JsonStreamParser();
-	jsonStreamParser.setEventHandler(handleJsonStreamParserEvent);
+	jsonStreamParser.setEventHandler(jsonStreamingEventHandlerForJsonPathQuery);
 	jsonStreamParser.startJsonStreaming(fileName);
 }
 
