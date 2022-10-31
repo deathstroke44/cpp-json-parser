@@ -67,6 +67,7 @@ class Node {
 	string keyValue;
 
 	/*
+	 * ETF : Extended Transition Functiob
 	 * outputOfETFExceptAcceptState = ETF(parentNode.outputOfETFExceptAcceptState,thisNode) - {ACCEPT-STATE}
 	 * outputOfETFHasAcceptState = ETF(parentNode.outputOfETFExceptAcceptState,thisNode).has(ACCEPT-STATE)
 	 */
