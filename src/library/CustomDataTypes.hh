@@ -74,7 +74,7 @@ class Node {
 	/*
 	 * ETF : Extended Transition Function
 	 * currentJsonPathList = ["$","general","user","name"]
-	 * if this object is the 2nd node of currentJsonPathList
+	 * if this object is the ith node of currentJsonPathList
 	 * then this.outputOfETFExceptAcceptState = ETF(q0,currentJsonPathList[0:i]) - {ACCEPTS-STATE}
 	 * and this. outputOfETFHasAcceptState = ETF(q0,currentJsonPathList[0:i]).has(ACCEPTS-STATE)
 	 * For Example:
