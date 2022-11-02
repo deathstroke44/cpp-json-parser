@@ -160,7 +160,7 @@ void updateResult(const StreamToken &streamToken) {
 		} else {
 			jsonPath.append("[" + to_string(node.indexValue) + "]");
 		}
-		if (node.outputOfETFUptoThisNodeInCurrentPathETFHasAcceptState) {
+		if (node.outputOfETFUptoThisNodeInCurrentPathHasAcceptState) {
 			numberOfJsonPathsAddedInResult++;
 			addStreamTokenInJsonPathQueryResult(jsonPath, streamToken);
 		}
@@ -214,14 +214,14 @@ void computeExtendedTransitionFunctionForCurrentJsonPath() {
 			}
 			if (jsonPathQueryProcessed[state + 1].satisfyJsonPathQuery(lastNodeOfCurrentJsonPath)) {
 				if (state + 1 == acceptStateOfNfa) {
-					lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathETFHasAcceptState = true;
+					lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathHasAcceptState = true;
 				} else {
 					lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathExceptAcceptState.insert(state + 1);
 				}
 			}
 		}
 	}
-	if (lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathETFHasAcceptState) {
+	if (lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathHasAcceptState) {
 		countOfPrefixPathsThatsETFOutputContainsAcceptState++;
 	}
 }
@@ -247,7 +247,7 @@ bool isIncrementIndexOfLastNodeIsNecessaryNowConsideringETFState() {
 void popNodeFromCurrentJsonPath() {
 	if (!currentJsonPathList.empty()) {
 		Node &lastNodeOfCurrentJsonPath = currentJsonPathList.back();
-		if (lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathETFHasAcceptState) {
+		if (lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathHasAcceptState) {
 			countOfPrefixPathsThatsETFOutputContainsAcceptState--;
 		}
 		lastNodeOfCurrentJsonPath.clearAutomationStates();
@@ -266,7 +266,7 @@ void pushIndexNodeInCurrentJsonPath(int index) {
 
 void incrementIndexOfLastNodeInCurrentJsonPath() {
 	Node &lastNodeOfCurrentJsonPath = currentJsonPathList.back();
-	if (lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathETFHasAcceptState) {
+	if (lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathHasAcceptState) {
 		countOfPrefixPathsThatsETFOutputContainsAcceptState--;
 	}
 	lastNodeOfCurrentJsonPath.indexValue++;
@@ -413,7 +413,7 @@ void processJsonPathQuery(const string &jsonPathQuery) {
 void initJsonPathQueryStates(string &jsonPathQuery) {
 	Node node("$", true);
 	if (jsonPathQuery == "$") {
-		node.outputOfETFUptoThisNodeInCurrentPathETFHasAcceptState = true;
+		node.outputOfETFUptoThisNodeInCurrentPathHasAcceptState = true;
 	} else {
 		node.outputOfETFUptoThisNodeInCurrentPathExceptAcceptState.insert(0);
 	}
