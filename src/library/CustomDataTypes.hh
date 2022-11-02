@@ -73,11 +73,17 @@ class Node {
 
 	/*
 	 * ETF : Extended Transition Function
-	 * outputOfETFExceptAcceptState = ETF(parentNode.outputOfETFExceptAcceptState,thisNode) - {ACCEPT-STATE}
-	 * outputOfETFHasAcceptState = ETF(parentNode.outputOfETFExceptAcceptState,thisNode).has(ACCEPT-STATE)
+	 * currentJsonPathList = ["$","general","user","name"]
+	 * if this object is the 2nd node of currentJsonPathList
+	 * then this.outputOfETFExceptAcceptState = ETF(q0,currentJsonPathList[0:i]) - {ACCEPTS-STATE}
+	 * and this. outputOfETFHasAcceptState = ETF(q0,currentJsonPathList[0:i]).has(ACCEPTS-STATE)
+	 * For Example:
+	 * this object is the 2nd node of currentJsonPathList
+	 * then this.outputOfETFExceptAcceptState = ETF(q0,["$","general","user"]) - {ACCEPTS-STATE}
+	 * and this. outputOfETFHasAcceptState = ETF(q0,["$","general","user"]).has(ACCEPTS-STATE)
 	 */
-	set<int> outputOfETFExceptAcceptState;
-	bool outputOfETFHasAcceptState = false;
+	set<int> outputOfETFUptoThisNodeInCurrentPathExceptAcceptState;
+	bool outputOfETFUptoThisNodeInCurrentPathETFHasAcceptState = false;
 
 	Node() = default;
 
@@ -103,7 +109,7 @@ class Node {
 	}
 
 	void clearAutomationStates() {
-		outputOfETFExceptAcceptState.clear();
-		outputOfETFHasAcceptState = false;
+		outputOfETFUptoThisNodeInCurrentPathExceptAcceptState.clear();
+		outputOfETFUptoThisNodeInCurrentPathETFHasAcceptState = false;
 	}
 };
