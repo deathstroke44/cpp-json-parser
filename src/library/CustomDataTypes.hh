@@ -82,8 +82,8 @@ class Node {
 	 * then this.outputOfETFExceptAcceptState = ETF(q0,["$","general","user"]) - {ACCEPTS-STATE}
 	 * and this. outputOfETFHasAcceptState = ETF(q0,["$","general","user"]).has(ACCEPTS-STATE)
 	 */
-	set<int> outputOfETFUptoThisNodeInCurrentPathExceptAcceptState;
-	bool outputOfETFUptoThisNodeInCurrentPathHasAcceptState = false;
+	set<int> nfaStates;
+	bool nfaStatesHaveAcceptState = false;
 
 	Node() = default;
 
@@ -109,7 +109,7 @@ class Node {
 	}
 
 	void clearAutomationStates() {
-		outputOfETFUptoThisNodeInCurrentPathExceptAcceptState.clear();
-		outputOfETFUptoThisNodeInCurrentPathHasAcceptState = false;
+		nfaStates.clear();
+		nfaStatesHaveAcceptState = false;
 	}
 };

@@ -163,7 +163,7 @@ void updateResult(const StreamToken &streamToken) {
 		} else {
 			jsonPath.append("[" + to_string(node.indexValue) + "]");
 		}
-		if (node.outputOfETFUptoThisNodeInCurrentPathHasAcceptState) {
+		if (node.nfaStatesHaveAcceptState) {
 			numberOfJsonPathsAddedInResult++;
 			addStreamTokenInJsonPathQueryResult(jsonPath, streamToken);
 		}
@@ -202,21 +202,20 @@ void printJsonPathQueryResult() {
 void computeExtendedTransitionFunctionForCurrentJsonPath() {
 	Node &lastNodeOfCurrentJsonPath = currentJsonPathList.back();
 	lastNodeOfCurrentJsonPath.clearAutomationStates();
-	for (auto state : getSecondLastNodeOfCurrentJsonPath().outputOfETFUptoThisNodeInCurrentPathExceptAcceptState) {
+	for (auto state : getSecondLastNodeOfCurrentJsonPath().nfaStates) {
 		if (state + 1 <= acceptStateOfNfa) {
 			if (jsonPathQueryProcessed[state + 1].recursiveDescent) {
-				lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathExceptAcceptState.insert(state);
+				lastNodeOfCurrentJsonPath.nfaStates.insert(state);
 			}
 			if (jsonPathQueryProcessed[state + 1].satisfyJsonPathQuery(lastNodeOfCurrentJsonPath)) {
 				if (state + 1 == acceptStateOfNfa) {
-					lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathHasAcceptState = true;
-				} else {
-					lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathExceptAcceptState.insert(state + 1);
+					lastNodeOfCurrentJsonPath.nfaStatesHaveAcceptState = true;
 				}
+				lastNodeOfCurrentJsonPath.nfaStates.insert(state + 1);
 			}
 		}
 	}
-	if (lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathHasAcceptState) {
+	if (lastNodeOfCurrentJsonPath.nfaStatesHaveAcceptState) {
 		countOfPrefixPathsThatsETFOutputContainsAcceptState++;
 	}
 }
@@ -243,14 +242,15 @@ bool isLastNodeOfCurrentJsonPathIsIndexNode() {
  * @return
  */
 bool isIncrementIndexOfLastNodeIsNecessaryNowConsideringETFState() {
+	Node secondLastNodeOfCurrentJsonPath = getSecondLastNodeOfCurrentJsonPath();
 	return currentJsonPathList.size() - 2 >= 0
-		&& !getSecondLastNodeOfCurrentJsonPath().outputOfETFUptoThisNodeInCurrentPathExceptAcceptState.empty();
+		&& (secondLastNodeOfCurrentJsonPath.nfaStates.size() - secondLastNodeOfCurrentJsonPath.nfaStatesHaveAcceptState > 0);
 }
 
 void popNodeFromCurrentJsonPath() {
 	if (!currentJsonPathList.empty()) {
 		Node &lastNodeOfCurrentJsonPath = currentJsonPathList.back();
-		if (lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathHasAcceptState) {
+		if (lastNodeOfCurrentJsonPath.nfaStatesHaveAcceptState) {
 			countOfPrefixPathsThatsETFOutputContainsAcceptState--;
 		}
 		lastNodeOfCurrentJsonPath.clearAutomationStates();
@@ -269,7 +269,7 @@ void pushIndexNodeInCurrentJsonPath(int index) {
 
 void incrementIndexOfLastNodeInCurrentJsonPath() {
 	Node &lastNodeOfCurrentJsonPath = currentJsonPathList.back();
-	if (lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathHasAcceptState) {
+	if (lastNodeOfCurrentJsonPath.nfaStatesHaveAcceptState) {
 		countOfPrefixPathsThatsETFOutputContainsAcceptState--;
 	}
 	lastNodeOfCurrentJsonPath.indexValue++;
@@ -416,9 +416,9 @@ void processJsonPathQuery(const string &jsonPathQuery) {
 void initJsonPathQueryStates(string &jsonPathQuery) {
 	Node node("$", true);
 	if (jsonPathQuery == "$") {
-		node.outputOfETFUptoThisNodeInCurrentPathHasAcceptState = true;
+		node.nfaStatesHaveAcceptState = true;
 	} else {
-		node.outputOfETFUptoThisNodeInCurrentPathExceptAcceptState.insert(0);
+		node.nfaStates.insert(0);
 	}
 	currentJsonPathList.emplace_back(node);
 	processJsonPathQuery(jsonPathQuery);
