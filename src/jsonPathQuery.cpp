@@ -7,6 +7,9 @@
 
 using namespace std;
 
+Node getLastNodeOfCurrentJsonPath();
+Node getSecondLastNodeOfCurrentJsonPath();
+
 vector<Node> currentJsonPathList;
 
 /**
@@ -182,14 +185,6 @@ void printJsonPathQueryResult() {
 	}
 }
 
-Node getLastNodeOfCurrentJsonPath() {
-	return currentJsonPathList.back();
-}
-
-Node getSecondLastNodeOfCurrentJsonPath() {
-	return currentJsonPathList.at(currentJsonPathList.size() - 2);
-}
-
 /**
  * @brief 
  * ETF - Extended Transition Function
@@ -224,6 +219,14 @@ void computeExtendedTransitionFunctionForCurrentJsonPath() {
 	if (lastNodeOfCurrentJsonPath.outputOfETFUptoThisNodeInCurrentPathHasAcceptState) {
 		countOfPrefixPathsThatsETFOutputContainsAcceptState++;
 	}
+}
+
+Node getLastNodeOfCurrentJsonPath() {
+	return currentJsonPathList.back();
+}
+
+Node getSecondLastNodeOfCurrentJsonPath() {
+	return currentJsonPathList.at(currentJsonPathList.size() - 2);
 }
 
 bool isLastNodeOfCurrentJsonPathIsKeyNode() {
