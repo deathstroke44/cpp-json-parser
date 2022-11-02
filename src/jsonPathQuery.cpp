@@ -27,6 +27,8 @@ map<string, StreamToken> lastAddedTokenInResultMap;
 
 /**
  * Processed tokenized version of json path query
+ * Each element of jsonPathQueryProcessed is a state of nfa and ith element represent
+   condition of reaching (i-1)th state to (i-1)th state (if ith node is recursive descent) or ith state of nfa
  */
 vector<Node> jsonPathQueryProcessed;
 bool wildCardOrRecursiveDescentContainsInQuery = false;

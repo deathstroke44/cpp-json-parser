@@ -61,10 +61,15 @@ class StreamToken {
 class Node {
  public:
 	bool isKeyNode = false;
-	bool wildcard = false;
-	bool recursiveDescent = false;
 	int indexValue;
 	string keyValue;
+
+	/**
+	 * These two fields are used for representing processed query
+	 */
+	bool wildcard = false; // *
+	bool recursiveDescent = false; // ..user
+
 
 	/*
 	 * ETF : Extended Transition Function
